@@ -1,0 +1,189 @@
+<?page title="Asignación de Camiones a Sectores" contentType="text/html;charset=UTF-8"?>
+<zk>
+<window id="ASICA" title="Asignación de Camiones a Sectores" width="550px" border="normal">
+	<groupbox closable="false" >
+		<groupbox closable="true">
+			<caption label="Asignaciones"></caption>
+			<listbox mold="paging" pageSize="3" >
+				<listhead>
+					<listheader label="Camion" sort="auto" />
+					<listheader label="Dias" sort="auto" />
+					<listheader label="Jornada" sort="auto" />
+					<listheader label="Sector" sort="auto" />
+					<listheader label="Acciones" image="/img/help.png" tooltip="accionpop" />
+				</listhead>	
+				<listitem>
+					<listcell label="AA-99" />
+					<listcell label="Lunes,Martes" />
+					<listcell label="Mañana" />
+					<listcell label="Norte" />
+					<listcell>
+						<image src="/img/remover.png" 
+						tooltiptext="Eliminar"
+						onDoubleClick="eliminar();" />
+						<image src="/img/editar.png" 
+						tooltiptext="Editar"
+						onDoubleClick="" />
+					</listcell>
+				</listitem>
+				<listitem>
+					<listcell label="AA-99" />
+					<listcell label="Lunes, Miercoles" />
+					<listcell label="Tarde" />
+					<listcell label="Oriente" />
+					<listcell>
+						<image src="/img/remover.png" 
+						tooltiptext="Eliminar"
+						onDoubleClick="eliminar();" />
+						<image src="/img/editar.png" 
+						tooltiptext="Editar"
+						onDoubleClick="" />
+					</listcell>
+				</listitem>
+				<listitem>
+					<listcell label="AA-99" />
+					<listcell label="Martes" />
+					<listcell label="Mañana" />
+					<listcell label="Sur" />
+					<listcell>
+						<image src="/img/remover.png" 
+						tooltiptext="Eliminar"
+						onDoubleClick="eliminar();" />
+						<image src="/img/editar.png" 
+						tooltiptext="Editar"
+						onDoubleClick="" />
+					</listcell>
+				</listitem>
+				<listitem>
+					<listcell label="AA-99" />
+					<listcell label="Martes" />
+					<listcell label="Tarde" />
+					<listcell label="Poniente" />
+					<listcell>
+						<image src="/img/remover.png" 
+						tooltiptext="Eliminar"
+						onDoubleClick="eliminar();" />
+						<image src="/img/editar.png" 
+						tooltiptext="Editar"
+						onDoubleClick="" />
+					</listcell>
+				</listitem>
+				<listitem>
+					<listcell label="AA-99" />
+					<listcell label="Martes" />
+					<listcell label="Noche" />
+					<listcell label="Centro" />
+					<listcell>
+						<image src="/img/remover.png" 
+						tooltiptext="Eliminar"
+						onDoubleClick="eliminar();" />
+						<image src="/img/editar.png" 
+						tooltiptext="Editar"
+						onDoubleClick="" />
+					</listcell>
+				</listitem>
+				<listitem>
+					<listcell label="AA-99" />
+					<listcell label="Miercoles" />
+					<listcell label="Mañana" />
+					<listcell label="Poniente" />
+					<listcell>
+						<image src="/img/remover.png" 
+						tooltiptext="Eliminar"
+						onDoubleClick="eliminar();" />
+						<image src="/img/editar.png" 
+						tooltiptext="Editar"
+						onDoubleClick="" />
+					</listcell>
+				</listitem>
+			</listbox>
+			<zscript><![CDATA[
+				void eliminar(){
+					int resp = Messagebox.show("Esta seguro que desea eliminar el registro?",
+							"Pregunta", 
+							Messagebox.OK | Messagebox.CANCEL, Messagebox.QUESTION);
+					if(Messagebox.OK == resp){
+						Messagebox.show("Operación realizada con Exito.","Información",Messagebox.OK,Messagebox.INFORMATION);
+					}
+				}
+            ]]></zscript>
+		</groupbox>
+		<grid>
+			<rows>
+				<row>
+					<label value="Camion: " />
+					<bandbox>
+						<bandpopup width="300px" >
+							 <listbox id="CamionBandlist" >
+								<listhead>
+									<listheader label="Patente" sort="auto" />
+									<listheader label="Marca" sort="auto" />
+									<listheader label="Modelo" sort="auto" />
+									<listheader label="Año" sort="auto" />
+									<listheader label="Estado" sort="auto" />
+									<listheader label="Descripcion" sort="auto" />
+								</listhead>
+								<listitem>
+									<listcell label="AA-99" />
+									<listcell label="Peugeot" />
+									<listcell label="Ushuaia" />
+									<listcell label="2000" />
+									<listcell label="OK" />
+									<listcell label="Capacidad de 1 tonelada y amplio espacio" />
+								</listitem>
+							</listbox>
+						</bandpopup>
+					</bandbox>
+				</row>
+				<row>
+					<label value="Despacho: " />
+					<hbox>
+						<radiogroup>
+							<radio label="Santiago" />
+							<radio label="Regiones" />
+						</radiogroup>
+						<space width="5px" />
+						<label value="Sector: " />
+						<space width="5px" />
+						<combobox>
+							<comboitem label="Centro"/>
+							<comboitem label="Norte"/>
+							<comboitem label="Sur"/>
+							<comboitem label="Poniente"/>
+							<comboitem label="Oriente"/>
+						</combobox>
+					</hbox>	
+				</row>
+				<row>
+					<label value="Jornada: " />
+					<radiogroup>
+						<radio id="MAN" label="Mañana"/>
+						<radio id="TAR" label="Tarde"/>
+						<radio id="AMB" label="Mañana y Tarde" />
+					</radiogroup>
+				</row>
+				<row>
+					<label value="Dia: " />
+					<groupbox>
+						<checkbox label="Lunes" />
+						<checkbox label="Martes"/>
+						<checkbox label="Miercoles" />
+						<checkbox label="Jueves" />
+						<checkbox label="Viernes" />
+						<checkbox label="Sabado" />
+					</groupbox>
+				</row>
+			</rows>
+		</grid>
+		<div align="center">
+			<button image="/img/add.png" label="Agregar" onClick="ingresar();" />
+			<button image="/img/database.png"  label="Aplicar Cambios" onClick="replicar();" />
+		</div>
+	</groupbox>
+	<popup id="accionpop" width="300px">
+		<html>
+			Debe utilizar Doble Click para ejecutar las acciones.
+		</html>
+	</popup>
+</window>
+</zk>

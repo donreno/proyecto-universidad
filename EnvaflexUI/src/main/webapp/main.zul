@@ -1,0 +1,154 @@
+<?page title="Desktop Envaflex Ltda." contentType="text/html;charset=UTF-8"?>
+<zk>
+	<borderlayout onCreate="chequearLogin();">
+	<north>
+		<vbox width="100%" >
+			 <hbox>
+				<image id="img1" width="70px" height="70px" src="/img/logoEnvaflex.png" ></image>
+				<div>
+					<space width="50px"></space>
+					<label style="font-weight:bold;font-size:22;" value="Administración Envaflex Ltda." />
+					<space width="50px"></space>
+				</div>
+				<space spacing="100"></space>
+				<div align="left" left="0" >
+					<image src="/img/login.png" tooltiptext="Login" onClick='levantarModal("login.zul");' style="cursor:pointer;" align="left"/>
+					<image src="/img/logout.png" tooltiptext="Logout" onClick="cerrarSesion();" style="cursor:pointer;" align="left"/>
+					<image src="/img/modifica_login.png" tooltiptext="Cambiar Contraseña" style="cursor:pointer;" align="left"/>
+				</div>
+				<div align="right" style="padding-top:45px;" >
+					Bienvenido(a) <label id="nomUsuaLabel" style="font-weight:bold;" value="Anonimo" />.
+					<space width="75px"></space>
+				</div>	
+			 </hbox>
+			 <hbox width="100%">
+			 	<menubar width="100%">
+					<menu label="Administración">
+						<menupopup>
+							<menuitem label="Mantención de Productos" />
+							<menuitem label="Mantención de Empleados" />
+							<menuitem label="Mantención de Clientes"
+							onClick='levantarVentana("mantenimiento_clientes.zul");' />
+							<menuitem label="Mantención de Servicios"
+							onClick='levantarVentana("mantenimiento_servicios.zul");' />
+							<menuitem label="Mantención de Cargos" 
+							onClick='levantarVentana("mantenimiento_cargo.zul");'  />
+							<menuitem label="Mantención de Perfiles" />
+						</menupopup>
+					</menu>
+					<menu label="Cotizacion">
+						<menupopup>
+							<menuitem label="Cotizaciones"
+							onClick='levantarVentana("cotizacion.zul");' />
+							<menuitem label="N/A" />
+						</menupopup>
+					</menu>
+					<menu label="Venta">
+						<menupopup>
+							<menuitem label="Notas de Venta"
+							 onClick='levantarVentana("nota_venta_en_proceso.zul");'/>
+							<menuitem label="N/A" />
+						</menupopup>
+					</menu>
+					<!--menu label="Bodega">
+						<menupopup>
+							<menuitem label="Solicitudes de Entrega" 
+							onClick='levantarVentana("solicitudes_entrega.zul");'/>
+							<menuitem label="N/A" />
+							<menuitem label="N/A" />
+							<menuitem label="N/A" />
+						</menupopup>
+					</menu-->
+					<menu label="Despacho">
+						<menupopup>
+							<menuitem label="Despachos" 
+							onClick='levantarVentana("despachos.zul");'/>
+							<menuitem label="N/A" />
+							<menuitem label="Maqueta: Camiones/Sectores" 
+							onClick='levantarVentana("asignacion_sectores.zul");'/>
+						</menupopup>
+					</menu>
+				</menubar>
+			 </hbox>
+		</vbox>
+	</north>
+	<center>
+		<div  height="100%">
+			<div id="principal" ></div>
+			<portallayout>
+				<portalchildren height="650px" >
+					<panel>
+						<panelchildren>
+						</panelchildren>
+					</panel>
+				</portalchildren>
+			</portallayout>
+		</div>
+	</center>
+	<south >
+			<toolbar id="barraDeTareas">
+			</toolbar>	
+	</south>
+	</borderlayout>
+	<zscript>
+	<![CDATA[
+ 		import cl.envaflex.jpa.model.Empleado;
+	         
+    	void levantarVentana(String urlServicio){
+    		try{
+	    		final Window win = (Window) Executions.createComponents(
+	    				urlServicio, null, null);
+	    		win.setMaximizable(true);
+	    		win.setClosable(true);
+	    		win.setShadow(true);
+	    		win.setSizable(true);
+	    		win.doOverlapped();
+	    		win.setPosition("center");
+    		}catch(Exception e){
+    			e.printStackTrace();
+    		}
+    	}
+    	
+    	void levantarModal(String urlServicio){
+    		try{
+	    		final Window win = (Window) Executions.createComponents(
+	    				urlServicio, null, null);
+	    		win.setMaximizable(true);
+	    		win.setClosable(true);
+	    		win.setSizable(true);
+	    		win.setShadow(true);
+	    		win.doModal();
+	    		win.setPosition("center");
+    		}catch(Exception e){
+    			e.printStackTrace();
+    		}
+    	}
+    	
+    	void chequearLogin(){
+	    	//si no se ha realizado login correctamente
+	    	if(sessionScope.get("USUARIO_SESION")==null){
+	    		levantarModal("login.zul");
+		    }else{
+		    	//Empleado emp = (Empleado)sessionScope.get("USUARIO_SESION");
+		    	//nomUsuaLabel.setValue(emp.getNombreEmpleado()+" "+emp.getApellidoPaterno()+" "+emp.getApellidoMaterno());
+		    	//TODO: la sesion se encuentra abierta
+		    	//en este momento se debe construir el menu
+		    	//TODO: falta mapear los campos asociados a los roles/servicios
+		    	//esto con el fin de construir el menu correspondiente
+		    }
+    	}
+    	
+    	void cerrarSesion(){
+    		int resp = Messagebox.show("Esta seguro que desea terminar la Sesion?.",
+					"Pregunta", 
+					Messagebox.OK | Messagebox.CANCEL, Messagebox.QUESTION);
+			if(Messagebox.OK == resp){
+				sessionScope.put("USUARIO_SESION",null);
+				Messagebox.show("Se ha terminado la Sesion.","Información",Messagebox.OK,Messagebox.INFORMATION);
+				execution.sendRedirect("main.zul");
+			}
+    	}
+    ]]>
+	</zscript>
+	<!--  script type="text/javascript" src="js/trapbackspace.js" / -->
+</zk>

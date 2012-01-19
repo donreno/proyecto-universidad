@@ -1,0 +1,51 @@
+<?page title="Login" contentType="text/html;charset=UTF-8"?>
+<zk>
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit" arg0="./loginWin"?>
+<window title="Login" id="loginWin" use="cl.envaflex.ui.LoginWindow" width="300px" border="normal" onClose="cancelar();">
+<zscript><![CDATA[
+	import cl.envaflex.jpa.model.Empleado;
+	Empleado empleado = new Empleado();
+	
+	if(loginWin.getPreviousSibling()==null){
+    	execution.sendRedirect("main.zul");
+    }
+]]></zscript>
+<grid >
+	<rows>
+		<row>
+			Usuario: <textbox value="@{empleado.user}" maxlength="16" 
+			constraint="no empty" ></textbox>
+		</row>
+		<row>
+			Password: <textbox value="@{empleado.password}" type="password"
+			maxlength="16" constraint="no empty" ></textbox>
+		</row>
+	</rows>
+</grid>
+<div align="center">
+	<button label="Aceptar" onClick="aceptar();" ></button>
+	<button label="Cancelar" onClick="cancelar();"></button>
+</div>
+<zscript><![CDATA[
+	void aceptar(){
+		Empleado empleadoaux = loginWin.doLogin(empleado);
+		boolean valid = empleadoaux!=null;
+		if(valid){
+			sessionScope.put("USUARIO_SESION",empleadoaux);
+			execution.sendRedirect("main.zul");
+		}else{
+			try{
+				Messagebox.show("Nombre de Usuario y(o) Contraseña incorrecta.","Error",Messagebox.OK,Messagebox.ERROR);
+			}catch(Exception e){
+				//logger.log(e);
+			}
+		}
+	}
+	
+	void cancelar(){
+		loginWin.detach();
+		execution.sendRedirect("main.zul");
+	}
+]]></zscript>
+</window>
+</zk>

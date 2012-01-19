@@ -1,0 +1,771 @@
+<?page title="Cotizaciones" contentType="text/html;charset=UTF-8"?>
+<zk>
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit" arg0="./cotizWin"?>
+<window title="Cotizaciones" id="cotizWin" width="650px" border="normal"
+ use="cl.envaflex.ui.CotizacionWin">
+<zscript><![CDATA[
+	import cl.envaflex.jpa.model.Cliente;
+	import cl.envaflex.jpa.model.NotaVenta;
+	Map parametros = new HashMap();
+	Cliente buscaCliente;
+	List clientes = cotizWin.findAllClientes();
+	List productos = cotizWin.findAllProductos();
+	List cotizaciones = new ArrayList();
+	NotaVenta nuevaNota = new NotaVenta();
+	NotaVenta seleccionado;
+	
+	if(cotizWin.getPreviousSibling()==null){
+    	execution.sendRedirect("main.zul");
+    }
+]]></zscript>
+<groupbox id="buscaCotizgb" >
+	<caption label="Busqueda de Cotizaciones"/>
+	<vbox>
+		<hbox>
+			<label value="Numero: " />
+			<separator width="10px" />
+			<intbox value="@{parametros.num}" />
+			<separator width="100%" />
+		</hbox>
+		<hbox>
+			<label value="Fecha desde: " />
+			<separator width="10px" />
+			<datebox value="@{parametros.fecha_desde}" />
+			<separator width="25px" />
+			<label value="Fecha hasta: " />
+			<separator width="10px" />
+			<datebox value="@{parametros.fecha_hasta}"  />
+		</hbox>
+		<hbox>
+			<label value="Cliente: " />
+			<separator width="10px" />
+			<bandbox id="clieSearchbd" 
+			value="@{buscaCliente.nombreCliente}" readonly="true"
+			onOpen="recargarClientes(searchClieListbox);" >
+			<zscript><![CDATA[ 
+				void recargarClientes(Listbox lista){
+					clientes = lista.getModel();
+					clientes.clear();
+					clientes.addAll(cotizWin.findAllClientes());
+				}
+			]]></zscript>
+			<bandpopup width="350px">
+				<listbox id="searchClieListbox" model="@{clientes}" onSelect="clieSearchbd.closeDropdown();"  
+				selectedItem="@{buscaCliente}" multiple="false" checkmark="true"
+				mold="paging" pageSize="4" fixedLayout="true" >
+					<listhead>
+						<listheader label="Id" sort="auto(idCliente)" />
+						<listheader label="RUT" sort="auto(rutCliente)" />
+						<listheader label="Nombre" sort="auto(nombreCliente)" />
+					</listhead>
+					<listitem self="@{each=clie1}" >
+						<listcell label="@{clie1.idCliente}" />
+						<listcell label="@{clie1.rutCliente}" />
+						<listcell label="@{clie1.nombreCliente}" />
+					</listitem>
+				</listbox>
+			</bandpopup>
+			</bandbox>
+		</hbox>
+		<hbox>
+			<button image="/img/find.png" label="Buscar" onClick="buscarCotiz();" />
+			<zscript><![CDATA[ 
+				void buscarCotiz(){
+					cotizaciones = cotizListbox.getModel();
+					parametros.put("cliente",buscaCliente);
+					Date fecha_desde = (Date)parametros.get("fecha_desde");
+					Date fecha_hasta = (Date)parametros.get("fecha_hasta");
+					Long num = (Long)parametros.get("num");
+					cotizaciones.clear();
+					cotizaciones.addAll(cotizWin.findCotizaciones(buscaCliente.getIdCliente(),num,fecha_desde,fecha_hasta));
+				}
+			]]></zscript>
+		</hbox>
+	</vbox>
+	<separator bar="true"></separator>
+	<listbox id="cotizListbox" model="@{cotizaciones}" selectedItem="@{seleccionado}" 
+	fixedLayout="true" mold="paging" pageSize="7" multiple="false" checkmark="true">
+		<zscript><![CDATA[cotizListbox.getPagingChild().setMold("os"); ]]></zscript>
+		<listhead>
+			<listheader label="Nº" sort="auto(idNotaVenta)" />
+			<listheader label="Fecha" sort="auto(fechaCotizacion)" />
+			<listheader label="Cliente" sort="auto(cliente_idCliente)" />
+			<listheader label="Total Neto" sort="auto(totalNeto)" />
+			<listheader label="Iva" sort="auto(iva)" />
+			<listheader label="Total" sort="auto(total)" />
+		</listhead>
+		<listitem self="@{each=cotiz}" >
+			<listcell label="@{cotiz.idNotaVenta}" />
+			<listcell>
+				<datebox style="border:none;" value="@{cotiz.fechaCotizacion}" readonly="true" buttonVisible="false"></datebox>
+			</listcell>
+			<listcell label="@{cotiz.cliente.nombreCliente}" />
+			<listcell>
+				<decimalbox value="@{cotiz.totalNeto}" style="font-weight:bold;border:none;"
+							 		format="$###,###.##" readonly="true" />
+			</listcell>
+			<listcell>
+				<decimalbox value="@{cotiz.iva}" style="font-weight:bold;border:none;"
+							 		format="$###,###.##" readonly="true" />
+			</listcell>
+			<listcell>
+				<decimalbox value="@{cotiz.total}" style="font-weight:bold;border:none;"
+							 		format="$###,###.##" readonly="true" />
+			</listcell>
+		</listitem>
+	</listbox>
+	<separator bar="true"/>
+	<div align="center">
+		<button label="Editar" image="/img/editar.png" onClick="modificar();" />
+		<button label="Iniciar Proceso de ventas" image="/img/proximo_paso.png" onClick="iniciarProcesoVenta();" />
+		<button image="/img/anular.png" label="Anular" onClick="doAnular();" />
+	</div>
+</groupbox>
+<groupbox id="nuevaCotizgb" visible="false" > 
+	<caption label="Nueva Cotización" />
+	<vbox>
+		<hbox>
+			<label value="Cliente: " />
+			<separator width="10px" />
+			<bandbox value="@{nuevaNota.cliente.nombreCliente}"
+			onOpen="recargarClientes(clieNuevListbox);" readonly="true" id="clieNuevbd" >
+			<bandpopup width="300px" >
+				<listbox id="clieNuevListbox" model="@{clientes}" selectedItem="@{nuevaNota.cliente}"
+				onSelect="clieNuevbd.closeDropdown();" fixedLayout="true" multiple="false" checkmark="true" >
+					<listhead>
+						<listheader label="Id" sort="auto(idCliente)" />
+						<listheader label="RUT" sort="auto(rutCliente)" />
+						<listheader label="Nombre" sort="auto(nombreCliente)" />
+					</listhead>
+					<listitem self="@{each=clie2}" >
+						<listcell label="@{clie2.idCliente}" />
+						<listcell label="@{clie2.rutCliente}" />
+						<listcell label="@{clie2.nombreCliente}" />
+					</listitem>
+				</listbox>
+			</bandpopup>
+			</bandbox>
+			<separator width="10px" />
+			<button label="Nuevo Cliente" onClick='levantarVentana("mantenimiento_clientes.zul");' />
+		</hbox>
+		<hbox>
+			<label value="Fecha Cotización: " />
+			<separator width="10px" />
+			<datebox id="fechNuebox" value="@{nuevaNota.fechaCotizacion}" buttonVisible="false" readonly="true" />
+		</hbox>
+		<hbox>
+			<vbox>
+				<zscript><![CDATA[
+					import cl.envaflex.jpa.model.DetalleNotaVenta;
+					
+					DetalleNotaVenta detalleCotizNuevaSel = new DetalleNotaVenta();
+					
+					List detallesCotizNueva = new ArrayList();
+				]]></zscript>
+				<listbox id="nuevaCotizDetalleListbox" model="@{detallesCotizNueva}"
+				onSelect='agreganuevoDetalleButton.setDisabled(true);prodNuevCotizbox.setButtonVisible(false);prodNuevCotizbox.setDisabled(true);
+							cantidadnbox.setConstraint("no negative, no empty, no zero");
+					    	punitarionbox.setConstraint("no negative, no empty, no zero");'
+				selectedItem="@{detalleCotizNuevaSel}" mold="paging" fixedLayout="true" pageSize="5" multiple="false" checkmark="true" >
+				<zscript><![CDATA[nuevaCotizDetalleListbox.getPagingChild().setMold("os"); ]]></zscript>
+					<listhead>
+						<listheader label="Producto" sort="auto(producto_idProducto)" />
+						<listheader label="Precio Unitario" sort="auto(precioUnitario)" />
+						<listheader label="Cantidad" sort="auto(cantidadProducto)" />
+						<listheader label="Total Producto" sort="auto(totalProdutco)" />
+					</listhead>
+					<listitem self="@{each=detallnue}">
+						<listcell label="@{detallnue.producto.nombreProducto}" />
+						<listcell >
+							<decimalbox value="@{detallnue.precioUnitario}" style="font-weight:bold;border:none;"
+						 		format="$###,###.##" readonly="true" />
+						</listcell>
+						<listcell>
+							<label value="@{detallnue.cantidadProducto}" />
+							<label value="@{detallnue.producto.tipoUnidad}" />
+						</listcell>
+						<listcell >
+							<decimalbox value="@{detallnue.totalProducto}" style="font-weight:bold;border:none;"
+						 		format="$###,###.##" readonly="true" />
+						</listcell>
+					</listitem>
+					<listfoot>
+						<listfooter>
+							<vbox>
+								<label style="font-weight:bold;font-size:11;" value="Total Neto"></label>
+								<label style="font-weight:bold;font-size:11;" value="Iva"></label>
+								<label style="font-weight:bold;font-size:11;" value="Total"></label>
+								<image ></image>
+							</vbox>
+						</listfooter>
+						<listfooter></listfooter>
+						<listfooter></listfooter>
+						<listfooter>
+							<vbox>
+								<decimalbox id="netoNuevaCotizlb" value="@{nuevaNota.totalNeto}" style="font-weight:bold;font-size:11;border:none;"
+						 		format="$###,###.##" readonly="true"  />
+						 		<decimalbox id="ivaNuevaCotizlb" value="@{nuevaNota.iva}" style="font-weight:bold;font-size:11;border:none;"
+						 		format="$###,###.##" readonly="true"  />
+						 		<decimalbox id="totalNuevaCotizlb" value="@{nuevaNota.total}" style="font-weight:bold;font-size:11;border:none;"
+						 		format="$###,###.##" readonly="true"   />
+							</vbox>
+						</listfooter>
+					</listfoot>
+				</listbox>
+				<vbox>
+					<hbox>
+						<label value="Producto"></label>
+						<space width="10px" />
+						<bandbox id="prodNuevCotizbox" disabled="true" buttonVisible="false" value="@{productoSeleccionadoNueva.nombreProducto}" readonly="true" 
+						onOpen="recargarProductos(prodsNuevaCotizListbox);" width="200px">
+						<zscript><![CDATA[
+							import cl.envaflex.jpa.model.Producto;
+							
+							Producto productoSeleccionadoNueva = new Producto();
+							
+							void recargarProductos(Listbox lista){
+								productos = lista.getModel();
+								productos.clear();
+								productos.addAll(cotizWin.findAllProductos());
+							}
+							
+						]]></zscript>
+							<bandpopup width="300px" >
+								<listbox id="prodsNuevaCotizListbox" mold="paging" fixedLayout="true" multiple="false" checkmark="true"
+								model="@{productos}" onSelect="prodNuevCotizbox.closeDropdown();" selectedItem="@{productoSeleccionadoNueva}" >
+									<listhead>
+										<listheader label="Producto" sort="auto(nombreProducto)" />
+									</listhead>
+									<listitem self="@{each=prodN}" >
+										<listcell label="@{prodN.nombreProducto}" />
+									</listitem>
+								</listbox>	 
+							</bandpopup>
+						</bandbox>
+					</hbox>
+					<hbox>
+						<label value="Precio Unitario" />
+						<space width="10px" />
+						<decimalbox format="$###,###.##" id="punitarionbox" onChange="actualizarTotalNuevo();actualizarNuevaCotiz();" 
+						value="@{detalleCotizNuevaSel.precioUnitario}"  width="75px"  />
+						(Precio de referencia :
+						<decimalbox readonly="true" format="$###,###.##" value="@{productoSeleccionadoNueva.precioUnitario}" style="border:none;" ></decimalbox>)
+					</hbox>
+					<hbox>
+						<label value="Unidades" />
+						<space width="10px" />
+						<decimalbox format="###,###.##" id="cantidadnbox" onChange="actualizarTotalNuevo();actualizarNuevaCotiz();" 
+						 value="@{detalleCotizNuevaSel.cantidadProducto}"  width="75px"  />
+						<label  value="@{productoSeleccionadoNueva.tipoUnidad}" ></label>
+					</hbox>
+					<hbox>
+						<label value="Total" />
+						<space width="10px" />
+						<decimalbox id="totalnbox" value="@{detalleCotizNuevaSel.totalProducto}"
+						 format="$###,###.##" readonly="true"  width="75px" />
+					</hbox>
+				</vbox>
+				<div align="right">
+					<button label="Nuevo" onClick="crearNuevoDetalleNueva();" ></button>
+					<button id="agreganuevoDetalleButton" disabled="true" label="Agregar Producto" onClick="agregarProductoNuevaCotiz();" />
+					<button label="Remover" onClick="remover();" />
+					<zscript><![CDATA[
+					    import java.math.BigDecimal;
+					                  
+					    void crearNuevoDetalleNueva(){
+					    	detalleCotizNuevaSel = new DetalleNotaVenta();
+					    	detalleCotizNuevaSel.setCantidadProducto(new BigDecimal(1));
+					    	detalleCotizNuevaSel.setPrecioUnitario(new BigDecimal(1));
+					    	detalleCotizNuevaSel.setTotalProducto(new BigDecimal(1));
+					    	prodNuevCotizbox.setValue("");
+							cantidadnbox.setValue(detalleCotizNuevaSel.getCantidadProducto());
+							totalnbox.setValue(detalleCotizNuevaSel.getTotalProducto());
+							punitarionbox.setValue(detalleCotizNuevaSel.getPrecioUnitario());
+					    	agreganuevoDetalleButton.setDisabled(false);
+					    	prodNuevCotizbox.setButtonVisible(true);
+					    	prodNuevCotizbox.setDisabled(false);
+					    	cantidadnbox.setConstraint("no negative, no empty, no zero");
+					    	punitarionbox.setConstraint("no negative, no empty, no zero");
+					    }
+					                  
+						void agregarProductoNuevaCotiz(){
+							//se asignan los valores correspondientes
+							detalleCotizNuevaSel.setProducto_idProducto(productoSeleccionadoNueva.getIdProducto());
+							detalleCotizNuevaSel.setProducto(productoSeleccionadoNueva);
+							detalleCotizNuevaSel.setTotalProducto(detalleCotizNuevaSel.getCantidadProducto().multiply(detalleCotizNuevaSel.getPrecioUnitario()));
+							detallesCotizNueva = nuevaCotizDetalleListbox.getModel();
+							List detAux = new ArrayList();
+							detAux.addAll(detallesCotizNueva);
+							detallesCotizNueva.clear();
+							detallesCotizNueva.addAll(cotizWin.addDetalleCotizacionNueva(detalleCotizNuevaSel,detAux));
+							actualizarNuevaCotiz();
+						}
+						
+						void remover(){
+							detallesCotizNueva = nuevaCotizDetalleListbox.getModel();
+							detallesCotizNueva.remove(detalleCotizNuevaSel);
+							actualizarNuevaCotiz();
+						}
+						
+						void confirmarEliminacion(){
+							int resp = Messagebox.show("Esta seguro que desea eliminar el registro?",
+									"Pregunta", 
+									Messagebox.OK | Messagebox.CANCEL, Messagebox.QUESTION);
+							if(Messagebox.OK == resp){
+								Messagebox.show("Operación realizada con Exito.","Información",Messagebox.OK,Messagebox.INFORMATION);
+							}
+						}
+						void limpiarNuevaCotiz(){
+							cantidadnbox.setConstraint("");
+					    	punitarionbox.setConstraint("");
+							clieNuevbd.setValue("");
+							detallesCotizNueva = nuevaCotizDetalleListbox.getModel();
+							detallesCotizNueva.clear();
+							detalleCotizNuevaSel = new DetalleNotaVenta();
+							prodNuevCotizbox.setValue("");
+							cantidadnbox.setValue(new BigDecimal(0));
+							totalnbox.setValue(new BigDecimal(0));
+							punitarionbox.setValue(new BigDecimal(0));
+						}
+						
+						void actualizarNuevaCotiz(){
+							if(detalleCotizNuevaSel != null)
+								nuevaNota = cotizWin.actualizaDatosNuevaCotiz(detallesCotizNueva,nuevaNota);
+						}
+						
+						void actualizarTotalNuevo(){
+							if(detalleCotizNuevaSel != null)
+								cotizWin.actualizarTotalDetalleNueva(detalleCotizNuevaSel);
+						}
+					]]></zscript>
+				</div>
+				<separator bar="true"/>
+				<div align="right">
+					<button image="/img/database.png" label="Aceptar" onClick="aceptarNuevo();" />
+					<button image="/img/arrow_left.png" label="Volver" onClick="cancelarNuevo();" />
+					<zscript><![CDATA[
+						
+						void aceptarNuevo(){
+							boolean valid = cotizWin.validarCotizacion(nuevaNota, detallesCotizNueva);
+							if(valid){
+								boolean ok = cotizWin.ingresarCotizacion(nuevaNota, detallesCotizNueva);
+								if(ok){
+									Messagebox.show("Operaceión realizada con Exito.","Información",Messagebox.OK,Messagebox.INFORMATION);
+									nuevaCotizgb.setVisible(false);
+						    		buscaCotizgb.setVisible(true);
+						    		limpiarNuevaCotiz();
+						    		buscarCotiz();
+								}else{
+									Messagebox.show(cotizWin.getErrorMessage(),"Error",Messagebox.OK,Messagebox.ERROR);
+								}
+							}else{
+								Messagebox.show(cotizWin.getErrorMessage(),"Alerta",Messagebox.OK,Messagebox.EXCLAMATION);
+							}
+							buscarCotiz();
+						}
+						
+						void cancelarNuevo(){
+							nuevaCotizgb.setVisible(false);
+				    		buscaCotizgb.setVisible(true);
+				    		limpiarNuevaCotiz();
+				    		buscarCotiz();
+						}
+					]]></zscript>
+				</div>
+			</vbox>
+		</hbox>
+	</vbox>
+</groupbox>
+<groupbox id="modifCotizgb" visible="false" > 
+	<caption label="Modificar Cotización" />
+	<vbox>
+		<hbox>
+			<label value="Cliente: " />
+			<separator width="10px" />
+			<bandbox value="@{seleccionado.cliente.nombreCliente}"
+			onOpen="recargarClientes(clieModifListbox);" readonly="true" id="clieModifbd" >
+			<bandpopup width="300px" >
+				<listbox id="clieModifListbox" model="@{clientes}" selectedItem="@{seleccionado.cliente}"
+				onSelect="clieModifbd.closeDropdown();" fixedLayout="true" multiple="false" checkmark="true" >
+					<listhead>
+						<listheader label="Id" sort="auto(idCliente)" />
+						<listheader label="RUT" sort="auto(rutCliente)" />
+						<listheader label="Nombre" sort="auto(nombreCliente)" />
+					</listhead>
+					<listitem self="@{each=clie3}" >
+						<listcell label="@{clie3.idCliente}" />
+						<listcell label="@{clie3.rutCliente}" />
+						<listcell label="@{clie3.nombreCliente}" />
+					</listitem>
+				</listbox>
+			</bandpopup>
+			</bandbox>
+		</hbox>
+		<hbox>
+			<label value="Fecha Cotización: " />
+			<separator width="10px" />
+			<datebox id="fechModifbox" value="@{seleccionado.fechaCotizacion}" buttonVisible="false" readonly="true" />
+		</hbox>
+		<hbox>
+			<vbox>
+				<zscript><![CDATA[
+					import cl.envaflex.jpa.model.DetalleNotaVenta;
+					
+					DetalleNotaVenta detalleCotizModifSel = new DetalleNotaVenta();
+					
+					List detallesCotizModif = new ArrayList();
+				]]></zscript>
+				<listbox id="modifCotizDetalleListbox" model="@{detallesCotizModif}"
+				onSelect="agregamodifDetalleButton.setDisabled(true);prodModifCotizbox.setButtonVisible(false);prodModifCotizbox.setDisabled(true);"
+				selectedItem="@{detalleCotizModifSel}" mold="paging" fixedLayout="true" pageSize="5" multiple="false" checkmark="true" >
+				<zscript><![CDATA[modifCotizDetalleListbox.getPagingChild().setMold("os"); ]]></zscript>
+					<listhead>
+						<listheader label="Producto" sort="auto(producto_idProducto)" />
+						<listheader label="Precio Unitario" sort="auto(precioUnitario)" />
+						<listheader label="Cantidad" sort="auto(cantidadProducto)" />
+						<listheader label="Total Producto" sort="auto(totalProdutco)" />
+					</listhead>
+					<listitem self="@{each=detallmodif}">
+						<listcell label="@{detallmodif.producto.nombreProducto}" />
+						<listcell >
+							<decimalbox value="@{detallmodif.precioUnitario}" style="font-weight:bold;border:none;"
+						 		format="$###,###.##" readonly="true" />
+						</listcell>
+						<listcell>
+							<label value="@{detallmodif.cantidadProducto}" />
+							<label value="@{detallmodif.producto.tipoUnidad}" />
+						</listcell>
+						<listcell >
+							<decimalbox value="@{detallmodif.totalProducto}" style="font-weight:bold;border:none;"
+						 		format="$###,###.##" readonly="true" />
+						</listcell>
+					</listitem>
+					<listfoot>
+						<listfooter>
+							<vbox>
+								<label style="font-weight:bold;font-size:11;" value="Total Neto"></label>
+								<label style="font-weight:bold;font-size:11;" value="Iva"></label>
+								<label style="font-weight:bold;font-size:11;" value="Total"></label>
+							</vbox>
+						</listfooter>
+						<listfooter></listfooter>
+						<listfooter></listfooter>
+						<listfooter>
+							<vbox>
+								<decimalbox id="netoModifCotizlb" value="@{seleccionado.totalNeto}" style="font-weight:bold;font-size:11;border:none;"
+						 		format="$###,###.##" readonly="true"  />
+						 		<decimalbox id="ivaModifCotizlb" value="@{seleccionado.iva}" style="font-weight:bold;font-size:11;border:none;"
+						 		format="$###,###.##" readonly="true"  />
+						 		<decimalbox id="totalModifCotizlb" value="@{seleccionado.total}" style="font-weight:bold;font-size:11;border:none;"
+						 		format="$###,###.##" readonly="true"   />
+							</vbox>
+						</listfooter>
+					</listfoot>
+				</listbox>
+				<vbox>
+					<hbox>
+						<label value="Producto"></label>
+						<space width="10px" />
+						<bandbox id="prodModifCotizbox" disabled="true" buttonVisible="false" value="@{detalleCotizModifSel.producto.nombreProducto}" readonly="true" 
+						onOpen="recargarProductos(prodsModifCotizListbox);" width="200px">
+							<bandpopup width="300px" >
+								<listbox id="prodsModifCotizListbox" mold="paging" fixedLayout="true" multiple="false" checkmark="true"
+								model="@{productos}" onSelect="prodModifCotizbox.closeDropdown();" selectedItem="@{detalleCotizModifSel.producto}" >
+									<listhead>
+										<listheader label="Producto" sort="auto(nombreProducto)" />
+									</listhead>
+									<listitem self="@{each=prodM}" >
+										<listcell label="@{prodM.nombreProducto}" />
+									</listitem>
+								</listbox>	 
+							</bandpopup>
+						</bandbox>
+					</hbox>
+					<hbox>
+						<label value="Precio Unitario" />
+						<space width="10px" />
+						<decimalbox format="$###,###.##" id="punitariombox" onChange="actualizarTotalModif();actualizarModifCotiz();" 
+						value="@{detalleCotizModifSel.precioUnitario}" style="border:none;"  width="75px"
+						constraint="no zero, no negative, no empty" />
+						(Precio de referencia :
+						<decimalbox readonly="true" format="$###,###.##" style="border:none;" value="@{detalleCotizModifSel.producto.precioUnitario}" ></decimalbox>)
+					</hbox>
+					<hbox>
+						<label value="Unidades" />
+						<space width="10px" />
+						<decimalbox format="###,###.##" id="cantidadmbox" onChange="actualizarTotalModif();actualizarModifCotiz();" 
+						value="@{detalleCotizModifSel.cantidadProducto}" style="border:none;" width="75px"
+						constraint="no zero, no negative, no empty" />
+						<label  value="@{detalleCotizModifSel.producto.tipoUnidad}" ></label>
+					</hbox>
+					<hbox>
+						<label value="Total" />
+						<space width="10px" />
+						<decimalbox id="totalmbox" value="@{detalleCotizModifSel.totalProducto}"
+						 format="$###,###.##" style="border:none;" readonly="true"  width="75px" />
+					</hbox>
+				</vbox>
+				<div align="right">
+					<button label="Nuevo" onClick="crearNuevoDetalleModif();" ></button>
+					<button id="agregamodifDetalleButton" disabled="true" label="Agregar Producto" onClick="agregarProductoNuevaCotiz();" />
+					<button label="Remover" onClick="removerModif();" />
+					<zscript><![CDATA[
+					    import java.math.BigDecimal;
+					                  
+					    void crearNuevoDetalleModif(){
+					    	detalleCotizModifSel = new DetalleNotaVenta();
+					    	prodModifCotizbox.setValue("");
+							cantidadmbox.setValue(new BigDecimal(1));
+							totalmbox.setValue(new BigDecimal(1));
+							punitariombox.setValue(new BigDecimal(1));
+					    	agregamodifDetalleButton.setDisabled(false);
+					    	prodModifCotizbox.setButtonVisible(true);
+					    	prodModifCotizbox.setDisabled(false);
+					    }
+					    
+					    void aplicarCambiosModif(){
+					    	if(detalleCotizModifSel.getProducto()!=null){
+					    		//se asignan los valores correspondientes
+								detalleCotizModifSel.setProducto_idProducto(detalleCotizModifSel.getProducto().getIdProducto());
+								cotizWin.aplicarCambioModifDetalle(detalleCotizModifSel);
+								detallesCotizNueva = modifCotizDetalleListbox.getModel();
+								detallesCotizNueva.clear();
+								detallesCotizNueva.addAll(cotizWin.findDetalleForCotiz(seleccionado));
+								actualizarModifCotiz();
+					    	}
+					    }
+					                  
+						void agregarProductoModifCotiz(){
+							//se asignan los valores correspondientes
+							detalleCotizModifSel.setProducto_idProducto(detalleCotizModifSel.getProducto().getIdProducto());
+							detalleCotizModifSel.setNotaVenta_idNotaVenta(seleccionado.getIdNotaVenta());
+							cotizWin.ingresarDetalleModif(detalleCotizModifSel);
+							detallesCotizNueva = modifCotizDetalleListbox.getModel();
+							detallesCotizNueva.clear();
+							detallesCotizNueva.addAll(cotizWin.findDetalleForCotiz(seleccionado));
+							actualizarModifCotiz();
+						}
+						
+						void removerModif(){
+							detallesCotizModif = modifCotizDetalleListbox.getModel();
+							detallesCotizModif.remove(detalleCotizModifSel);
+							actualizarModifCotiz();
+						}
+						
+						void limpiarModifCotiz(){
+							clieModifbd.setValue("");
+							detallesCotizModif = modifCotizDetalleListbox.getModel();
+							detallesCotizModif.clear();
+							
+							prodModifCotizbox.setValue("");
+							cantidadmbox.setValue(new BigDecimal(0));
+							totalmbox.setValue(new BigDecimal(0));
+							punitariombox.setValue(new BigDecimal(0));
+						}
+						
+						void actualizarModifCotiz(){
+							nuevaNota = cotizWin.actualizaDatosModifCotiz(detallesCotizModif,seleccionado);
+						}
+						
+						void actualizarTotalModif(){
+							cotizWin.actualizarTotalDetalleModif(detalleCotizModifSel);
+						}
+					]]></zscript>
+				</div>
+				<separator bar="true"/>
+				<div align="right">
+					<button image="/img/database.png" label="Aceptar" onClick="aceptarModif();" />
+					<button image="/img/arrow_left.png" label="Volver" onClick="cancelarModif();" />
+					<zscript><![CDATA[
+						
+						void aceptarModif(){
+							boolean valid = cotizWin.validarCotizacion(seleccionado, detallesCotizModif);
+							if(valid){
+								boolean ok = cotizWin.modifcarCotizacion(seleccionado, detallesCotizModif);
+								if(ok){
+									Messagebox.show("Operación realizada con Exito.","Información",Messagebox.OK,Messagebox.INFORMATION);
+									modifCotizgb.setVisible(false);
+						    		buscaCotizgb.setVisible(true);
+								}else{
+									Messagebox.show(cotizWin.getErrorMessage(),"Error",Messagebox.OK,Messagebox.ERROR);
+								}
+							}else{
+								Messagebox.show(cotizWin.getErrorMessage(),"Alerta",Messagebox.OK,Messagebox.EXCLAMATION);
+							}
+							buscarCotiz();
+						}
+						
+						void cancelarModif(){
+							modifCotizgb.setVisible(false);
+				    		buscaCotizgb.setVisible(true);
+				    		buscarCotiz();
+						}
+					]]></zscript>
+				</div>
+			</vbox>
+		</hbox>
+	</vbox>
+</groupbox>
+<groupbox id="nuevaNotagb" visible="false" > 
+	<caption label="Cambiar a nota de venta" />
+	<vbox>
+		<hbox>
+			<label value="N°" />
+			<separator width="10px" />
+			<label value="@{seleccionado.idNotaVenta}" />
+		</hbox>
+		<hbox>
+			<label value="Cliente: " />
+			<separator width="10px" />
+			<label value="@{seleccionado.cliente.nombreCliente}" />
+		</hbox>
+		<hbox>
+			<vbox>
+				<zscript><![CDATA[
+				     List detallesNota = new ArrayList();
+				]]></zscript>
+				<listbox id="nuevaNotaDetalleListbox" model="@{detallesNota}"
+				 mold="paging" fixedLayout="true" pageSize="5"  >
+				 <zscript><![CDATA[nuevaNotaDetalleListbox.getPagingChild().setMold("os"); ]]></zscript>
+					<listhead>
+						<listheader label="Producto" sort="auto(producto_idProducto)" />
+						<listheader label="Precio Unitario" sort="auto(precioUnitario)" />
+						<listheader label="Cantidad" sort="auto(cantidadProducto)" />
+						<listheader label="Total Producto" sort="auto(totalProdutco)" />
+					</listhead>
+					<listitem self="@{each=detallnota}">
+						<listcell label="@{detallnota.producto.nombreProducto}" />
+						<listcell >
+							<decimalbox value="@{detallnota.precioUnitario}" style="font-weight:bold;border:none;"
+						 		format="$###,###.##" readonly="true" />
+						</listcell>
+						<listcell>
+							<label value="@{detallnota.cantidadProducto}" />
+							<label value="@{detallnota.producto.tipoUnidad}" />
+						</listcell>
+						<listcell >
+							<decimalbox value="@{detallnota.totalProducto}" style="font-weight:bold;border:none;"
+						 		format="$###,###.##" readonly="true" />
+						</listcell>
+					</listitem>
+					<listfoot>
+						<listfooter>
+							<vbox>
+								<label style="font-weight:bold;font-size:11;" value="Total Neto"></label>
+								<label style="font-weight:bold;font-size:11;" value="Iva"></label>
+								<label style="font-weight:bold;font-size:11;" value="Total"></label>
+							</vbox>
+						</listfooter>
+						<listfooter></listfooter>
+						<listfooter></listfooter>
+						<listfooter>
+							<vbox>
+								<decimalbox  value="@{seleccionado.totalNeto}" style="font-weight:bold;font-size:11;border:none;"
+						 		format="$###,###.##" readonly="true"  />
+						 		<decimalbox  value="@{seleccionado.iva}" style="font-weight:bold;font-size:11;border:none;"
+						 		format="$###,###.##" readonly="true"  />
+						 		<decimalbox  value="@{seleccionado.total}" style="font-weight:bold;font-size:11;border:none;"
+						 		format="$###,###.##" readonly="true"   />
+							</vbox>
+						</listfooter>
+					</listfoot>
+				</listbox>
+				<separator bar="true"/>
+				<div align="right">
+					<button image="/img/database.png" label="Aceptar" onClick="aceptarN();" />
+					<button image="/img/arrow_left.png" label="Volver" onClick="cancelarN();" />
+					<zscript><![CDATA[
+						
+						void aceptarN(){
+							boolean ok = cotizWin.iniciarNotaVenta(seleccionado);
+							if(ok){
+								Messagebox.show("Operación realizada con Exito.","Información",Messagebox.OK,Messagebox.INFORMATION);
+								buscaCotizgb.setVisible(true);
+					    		nuevaNotagb.setVisible(false);
+							}else{
+								Messagebox.show(cotizWin.getErrorMessage(),"Error",Messagebox.OK,Messagebox.ERROR);
+							}
+							buscarCotiz();
+						}
+						
+						void cancelarN(){
+				    		buscaCotizgb.setVisible(true);
+				    		nuevaNotagb.setVisible(false);
+				    		buscarCotiz();
+						}
+					]]></zscript>
+				</div>
+			</vbox>
+		</hbox>
+	</vbox>
+</groupbox>
+<separator height="10px" />
+<div align="right">
+	<button image="/img/add.png" label="Nueva Cotización" onClick="ingresar();" />
+	<zscript><![CDATA[
+		void doAnular(){
+			if(seleccionado!=null){
+				int resp = Messagebox.show("Esta seguro que desea anular el registro?",
+						"Pregunta", 
+						Messagebox.OK | Messagebox.CANCEL, Messagebox.QUESTION);
+				if(Messagebox.OK == resp){
+					boolean ok = cotizWin.anularNotaVenta(seleccionado);
+					if(ok){
+						Messagebox.show("Operación realizada con Exito.","Información",Messagebox.OK,Messagebox.INFORMATION);
+						buscarCotiz();
+					}else{
+						Messagebox.show(cotizWin.getErrorMessage(),"Error",Messagebox.OK,Messagebox.ERROR);
+					}	
+				}
+			}else{
+    			alert("Debe Seleccionar una Cotización.");
+    		}	
+		}              
+	                  
+    	void ingresar(){
+    		//se limpia la nueva nota
+    		nuevaNota.limpiar();
+    		nuevaNota.setFechaCotizacion(new Date());
+    		fechNuebox.setValue(nuevaNota.getFechaCotizacion());
+    		nuevaNota.setCliente(null);
+    		clieNuevbd.setValue("");
+    		//se ocultan los gbs que no corresponden
+    		nuevaCotizgb.setVisible(true);
+    		buscaCotizgb.setVisible(false);
+    		modifCotizgb.setVisible(false);
+    		nuevaNotagb.setVisible(false);
+    	}
+    	
+    	void modificar(){
+    		if(seleccionado!=null){
+	    		nuevaCotizgb.setVisible(false);
+	    		buscaCotizgb.setVisible(false);
+	    		modifCotizgb.setVisible(true);
+	    		nuevaNotagb.setVisible(false);
+	    		//se aplica el modelo del listado de detalle
+	    		detallesCotizModif = modifCotizDetalleListbox.getModel();
+	    		detallesCotizModif.clear();
+	    		detallesCotizModif.addAll(cotizWin.findDetalleForCotiz(seleccionado));
+    		}else{
+    			alert("Debe Seleccionar una Cotización.");
+    		}
+    	}
+    	
+    	void iniciarProcesoVenta(){
+    		if(seleccionado!=null){
+	    		nuevaCotizgb.setVisible(false);
+	    		buscaCotizgb.setVisible(false);
+	    		modifCotizgb.setVisible(false);
+	    		nuevaNotagb.setVisible(true);
+	    		//se aplica el modelo del listado de detalle
+	    		detallesNota = nuevaNotaDetalleListbox.getModel();
+	    		detallesNota.clear();
+	    		detallesNota.addAll(cotizWin.findDetalleForCotiz(seleccionado));
+    		}else{
+    			alert("Debe Seleccionar una Cotización.");
+    		}	
+    	}
+	]]></zscript>
+</div>
+</window>
+</zk>

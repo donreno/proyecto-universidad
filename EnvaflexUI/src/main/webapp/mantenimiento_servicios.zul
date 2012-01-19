@@ -1,0 +1,81 @@
+<?page title="Mantencion de Servicios" contentType="text/html;charset=UTF-8"?>
+<zk>
+	<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit" arg0="./admServWin"?>
+	<window title="Administración de servicios" id="admServWin" border="normal" width="570px"
+	use="cl.envaflex.ui.MantenimientoServiciosWin" >
+	<zscript><![CDATA[
+		import cl.envaflex.jpa.model.Servicio;
+		List servicios = admServWin.findAllServicios();
+		Servicio seleccionado = new Servicio();
+		
+		if(admServWin.getPreviousSibling()==null){
+	    	execution.sendRedirect("main.zul");
+	    }
+		
+	]]></zscript>
+	<listbox id="listServicios" fixedLayout="true" mold="paging"  model="@{servicios}"  selectedItem="@{seleccionado}" pageSize="5">
+	  <listhead>
+	  	<listheader label="Código" sort="auto(idServicio)" ></listheader>
+	  	<listheader label="Titulo" sort="auto(titulo)"></listheader>
+	  	<listheader label="url" sort="auto(descripcion)"></listheader>
+	  </listhead>
+	  <listitem self="@{each=servicio}" >
+	    <listcell label="@{servicio.idServicio}"/>
+	    <listcell label="@{servicio.titulo}" />
+	    <listcell label="@{servicio.url}" />
+	  </listitem>
+	</listbox>
+	<grid>
+	  <rows>
+	    <row>Código: <textbox value="@{seleccionado.idServicio}" maxlength="6" /></row>
+	    <row>Titulo: <textbox value="@{seleccionado.titulo}" maxlength="45" /></row>
+	    <row>Url: <textbox value="@{seleccionado.url}" maxlength="45" /></row>
+	    <row>Descripción: <textbox value="@{seleccionado.descripcion}" maxlength="200" rows="3" /></row>
+	  </rows>
+	</grid>
+	<div align="right" >
+		<button image="/img/agregar.png" label="Nuevo Servicio" onClick="ingresar();" />
+		<button image="/img/editar.png" label="Modificar" onClick="modificar();" />
+		<button image="/img/remover.png" label="Remover" onClick="eliminar();" />
+	</div>
+	<zscript><![CDATA[
+		
+		void eliminar(){
+			boolean res = admServWin.remover(seleccionado);
+			if(res==true){
+				Messagebox.show("Operación realizada con Exito.","Información",Messagebox.OK,Messagebox.INFORMATION);
+				actualizarDatos();
+			}else{
+				Messagebox.show("Ocurrio un Error realizando la Operación.","Error",Messagebox.OK,Messagebox.ERROR);
+			}
+		}
+		
+		void modificar(){
+			boolean res = admServWin.actualizar(seleccionado);
+			if(res==true){
+				Messagebox.show("Operación realizada con Exito.","Información",Messagebox.OK,Messagebox.INFORMATION);
+				actualizarDatos();
+			}else{
+				Messagebox.show("Ocurrio un Error realizando la Operación.","Error",Messagebox.OK,Messagebox.ERROR);
+			}
+		}
+		
+		void ingresar(){
+			boolean res = admServWin.agregar(seleccionado);
+			if(res==true){
+				Messagebox.show("Operación realizada con Exito.","Información",Messagebox.OK,Messagebox.INFORMATION);
+				actualizarDatos();
+			}else{
+				Messagebox.show("Ocurrio un Error realizando la Operación.","Error",Messagebox.OK,Messagebox.ERROR);
+			}
+		}
+		
+		void actualizarDatos(){
+			servicios = listServicios.getModel();
+			servicios.clear();
+			servicios.addAll(admServWin.findAllServicios());
+		}
+		
+	]]></zscript>
+	</window>
+</zk>

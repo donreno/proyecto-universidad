@@ -1,0 +1,487 @@
+<?page title="Despachos" contentType="text/html;charset=UTF-8"?>
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit" arg0="./despachosWin"?>
+<zk>
+<window title="Despachos" id="despachosWin" border="normal" width="900px"
+use="cl.envaflex.ui.DespachosWin">
+<zscript><![CDATA[
+    import cl.envaflex.jpa.model.Despacho;
+    import cl.envaflex.jpa.model.Entrega;
+    import cl.envaflex.jpa.model.Vehiculo;
+    import org.zkoss.zk.ui.AbstractComponent;
+    
+    Map paramBusqueda = new HashMap();
+    List despachos = new ArrayList();
+    Despacho seleccionado = null;
+    List entregasDespachoSel = new ArrayList();
+    List entregasDespachosMSel = new ArrayList();
+    List vehiculos = despachosWin.findAllVehiculos();
+    Vehiculo vehiculoSel;
+    Despacho despachoNuev = new Despacho();
+    
+    List estadosEntrega = new ArrayList();
+    
+    if(despachosWin.getPreviousSibling()==null){
+    	execution.sendRedirect("main.zul");
+    }
+    
+    
+]]></zscript>
+<groupbox id="busquedaGb" closable="false">
+	<caption label="Busqueda" />
+	<grid>
+		<rows style="border:none;" >
+			<row>
+				<label value="N° Despacho: " />
+				<intbox value="@{paramBusqueda.num}" ></intbox>	
+			</row>
+			<row>
+				<label value="Fecha: "/>
+				<hbox>
+					<vbox>
+						<label value="Desde:" />
+						<datebox value="@{paramBusqueda.fechaDesde}" />
+					</vbox>
+					<separator width="10px" ></separator>
+					<vbox>
+						<label value="Hasta:" />
+						<datebox value="@{paramBusqueda.fechaHasta}" />
+					</vbox>
+				</hbox>	
+			</row>
+			<row>
+				<label value="Estado:" />
+				<combobox id="comboBuscaEstado" value="@{paramBusqueda.estado}">
+					<comboitem  label="Programado" value="0" >
+					</comboitem>
+					<comboitem  label="Activo" value="1" >
+					</comboitem>
+					<comboitem  label="Cerrado" value="2" >
+					</comboitem>
+				</combobox>
+				<zscript><![CDATA[
+		                  paramBusqueda.put("estado","0");
+		                  comboBuscaEstado.select();
+				]]></zscript>
+			</row>
+		</rows>
+	</grid>
+	<button image="/img/find.png" label="Buscar" onClick="buscarDespachos();"></button>
+	<zscript><![CDATA[
+    	void buscarDespachos(){
+    		if(comboBuscaEstado.getSelectedItem()!=null)
+    			paramBusqueda.put("estado",comboBuscaEstado.getSelectedItem().getValue());
+    		despachos = listboxDespachos.getModel();
+    		despachos.clear();
+    		despachos.addAll(despachosWin.findDespachos(paramBusqueda));
+    	}
+    	
+    	void goDetalle(){
+			if(seleccionado!=null){
+				detalleDespacho.setVisible(true);
+				entregasDespachoSel = listboxDetalleDespachoSel.getModel();
+				entregasDespachoSel.clear();
+				entregasDespachoSel.addAll(despachosWin.findEntregasForDespacho(seleccionado));
+			}else{
+				alert("Debe Seleccionar un Despacho.");
+			}	
+		}
+	]]></zscript>
+	<separator height="15px" ></separator>
+	<hbox>
+	<groupbox>
+		<caption label="Resultado" />
+		<listbox id="listboxDespachos" model="@{despachos}" width="400px" mold="paging" selectedItem="@{seleccionado}" pageSize="8"
+		 onSelect="goDetalle();">
+			<zscript><![CDATA[listboxDespachos.getPagingChild().setMold("os"); ]]></zscript>
+			<listhead>
+					<listheader label="Nº" width="50px" sort="auto(idDespacho)" />
+					<listheader label="F. Despacho" width="75px" sort="auto(fecha)" />
+					<listheader label="Camión" width="100px" sort="auto(vehiculo_idVehiculo)" />
+					<listheader label="Chofer" width="100px" sort="auto(empleado_RUT_EMPLEADO)" />
+					<listheader label="Estado" width="75px" sort="auto(estadoDespacho)" />
+			</listhead>
+			<listitem self="@{each=despacho}" >
+			    <listcell label="@{despacho.idDespacho}"/>
+			    <listcell>
+			    	<datebox value="@{despacho.fecha}" readonly="true" buttonVisible="false"></datebox>
+			    </listcell>
+			    <listcell label="@{despacho.vehiculo_idVehiculo}"/>
+			    <listcell label="@{despacho.empleado_RUT_EMPLEADO}"/>
+			    <listcell label="@{despacho.estadoDespacho}" />
+			 </listitem>
+		</listbox>
+	</groupbox>
+	<separator width="10px"></separator>
+	<groupbox id="detalleDespacho" visible="false" >
+		<caption label="Detalle de Despacho" />
+		<listbox model="@{entregasDespachoSel}" width="400px" id="listboxDetalleDespachoSel" mold="paging" pageSize="7">
+			<zscript><![CDATA[listboxDetalleDespachoSel.getPagingChild().setMold("os"); ]]></zscript>
+			<listhead>
+					<listheader label="Nº" width="50px" sort="auto(idEntrega)" />
+					<listheader label="N.Venta" width="75px" sort="auto(notaVenta_idNotaVenta)" />
+					<listheader label="Total" width="100px" sort="auto(total)" />
+					<listheader label="Total Neto" width="100px" sort="auto(totalNeto)" />
+					<listheader label="Estado" width="75px" sort="auto(textoEstadoDespacho)" />
+			</listhead>
+			<listitem self="@{each=entregasDsel}">
+				<listcell label="@{entregasDsel.idEntrega}" ></listcell>
+				<listcell label="@{entregasDsel.notaVenta_idNotaVenta}" ></listcell>
+				<listcell>
+					<decimalbox readonly="true" format="$###,###,###.##" value="@{entregasDsel.total}" ></decimalbox>
+				</listcell>
+				<listcell>
+					<decimalbox readonly="true" format="$###,###,###.##" value="@{entregasDsel.totalNeto}" ></decimalbox>
+				</listcell>
+				<listcell label="@{entregasDsel.textoEstadoDespacho}" ></listcell>
+			</listitem>
+		</listbox>
+	</groupbox>
+	</hbox>
+	<separator height="10px" ></separator>
+	<div align="right">
+		<button image="/img/add.png" label="Nuevo Despacho" onClick="nuevoDespacho();" />
+		<button image="/img/editarp.png" label="Editar Despacho" onClick="goModificarDespacho();" />
+		<zscript><![CDATA[
+			void nuevoDespacho(){
+				//se limpian los listados
+				entregasOrigen = lbEntregasOrigen.getModel();
+				entregasOrigen.clear();
+          	  	entregasDestino = lbEntregasDestino.getModel();
+          	  	entregasDestino.clear();
+          	  	//se remueven las selecciones
+				entregaOrigenSel = null;
+				entregaDestinoSel = null;
+          	  	
+				//se ocultan y se muestran los correspondientes groupbox
+				busquedaGb.setVisible(false);
+				gbNuevDesp.setVisible(true);
+			}
+			
+			void goModificarDespacho(){
+				//TODO: Esto hay que completarlo, seguramente lo hago y termino despues de entregar el documento.
+				if(seleccionado!=null){
+					gbModificaDespacho.setVisible(true);
+					busquedaGb.setVisible(false);
+					entregasDespachosMSel = listboxModifDespachoSel.getModel();
+					entregasDespachosMSel.clear();
+					entregasDespachosMSel.addAll(despachosWin.findEntregasForDespacho(seleccionado));
+				}else{
+					alert("Debe Seleccionar un Despacho.");
+				}	
+			}
+		]]></zscript>
+	</div>
+</groupbox>
+<zscript><![CDATA[
+     Map busquedanuev = new HashMap();
+     
+     List entregasOrigen = new ArrayList();
+     List entregasDestino = new ArrayList();
+     
+     Entrega entregaOrigenSel = null;
+     Entrega entregaDestinoSel = null;
+     
+]]></zscript>
+<groupbox id="gbNuevDesp" visible="false" closable="false">
+	<caption label="Nuevo Despacho" />
+	<vbox>
+	<space height="5px" ></space>
+	<label value="Debe realizar una busqueda para rellenar el listado de Entregas." />
+	<space height="5px" ></space>
+	</vbox>
+	<groupbox>
+		<caption label="Busqueda" />
+		<grid>
+		<rows>
+			<row>
+				<label value="N° Despacho: " />
+				<intbox value="@{busquedanuev.num}" ></intbox>	
+			</row>
+			<row>
+				<label value="Fecha: "/>
+				<hbox>
+					<vbox>
+						<label value="Desde:" />
+						<datebox value="@{busquedanuev.fecha_desde}" />
+					</vbox>
+					<separator width="10px" ></separator>
+					<vbox>
+						<label value="Hasta:" />
+						<datebox value="@{busquedanuev.fecha_hasta}" />
+					</vbox>
+				</hbox>	
+			</row>
+		</rows>
+	</grid>
+	<button image="/img/find.png" label="Buscar" onClick="buscarEntregas();"></button>
+	<zscript><![CDATA[
+    	void buscarEntregas(){
+    		entregasOrigen = lbEntregasOrigen.getModel();
+    		entregasOrigen.clear();
+    		Date fecha_hasta = busquedanuev.get("fecha_hasta");
+			Date fecha_desde = busquedanuev.get("fecha_desde");
+			Long num = busquedanuev.get("num");
+    		entregasOrigen.addAll(despachosWin.findEntregasSolicitadas(num,fecha_desde,fecha_hasta));
+    	} 	
+	]]></zscript>
+	</groupbox>
+	<groupbox>
+		<caption label="Planificación de Despacho" />
+		<vbox>
+		<space height="5px" ></space>
+		<label value="Seleccione las entregas que requiera para programar el despacho." />
+		<space height="5px" ></space>
+		<grid style="border:none;">
+			<rows style="border:none;" >
+				<row style="border:none;" >
+					<label value="F. Despacho" />
+					<datebox readonly="true" value="@{despachoNuev.fecha}" constraint="no past, no today" ></datebox>
+				</row>
+				<row style="border:none;">
+					<label value="Seleccione un vehículo" />
+					<combobox model="@{vehiculos}" selectedItem="@{vehiculoSel}" value="@{vehiculo.patenteVehiculo}">
+				       <comboitem self="@{each=vehiculo}" label="@{vehiculo.patenteVehiculo}" 
+				       description="@{vehiculo.descripcion}" value="@{vehiculo.idVehiculo}"/>
+				   </combobox>	
+				</row>
+			</rows>
+		</grid>
+		<space height="5px" ></space>
+		</vbox>
+		<div align="center">
+		<hbox>
+			<listbox model="@{entregasOrigen}" width="250px" height="200px" id="lbEntregasOrigen" selectedItem="@{entregaOrigenSel}"
+			 mold="paging" multiple="false" pageSize="8" fixedLayout="true">
+			 	<zscript><![CDATA[lbEntregasOrigen.getPagingChild().setMold("os"); ]]></zscript>
+				<listitem self="@{each=entOri}" >
+					<listcell>
+						<hbox>
+							<label value="@{entOri.idEntrega}" />
+							<label value="@{entOri.notaVenta.cliente.nombreCliente}" />		
+							<datebox value="@{entOri.fecha_estimadaEntrega}" readonly="true" style="border:none;" buttonVisible="false" ></datebox>
+						</hbox>
+					</listcell>
+				</listitem>
+			</listbox>
+			<vbox>
+				<space height="40px" ></space>
+				<button label="> " onClick="agregarUno();"></button>
+				<button label=">>" onClick="agregarTodos();"></button>
+				<button label="&lt; " onClick="removerUno();"></button>
+				<button label="&lt;&lt;" onClick="removerTodos();"></button>
+				<zscript><![CDATA[
+	                  void agregarUno(){
+	                	  if(entregaOrigenSel!=null){
+		                	  entregasOrigen = lbEntregasOrigen.getModel();
+		                	  entregasDestino = lbEntregasDestino.getModel();
+		                	  entregasDestino.add(entregaOrigenSel);
+		                	  entregasOrigen.remove(entregaOrigenSel);
+		                	  entregaOrigenSel = null;
+	                	  }
+	                  }
+	                  
+	                  void removerUno(){
+	                	  if(entregaDestinoSel!=null){
+	                		  entregasOrigen = lbEntregasOrigen.getModel();
+		                	  entregasDestino = lbEntregasDestino.getModel();
+		                	  entregasOrigen.add(entregaDestinoSel);
+		                	  entregasDestino.remove(entregaDestinoSel);
+		                	  entregaDestinoSel = null;
+	                	  }
+	                  }
+	                  
+	                  void agregarTodos(){
+	                	  entregasOrigen = lbEntregasOrigen.getModel();
+	                	  entregasDestino = lbEntregasDestino.getModel();
+	                	  entregasDestino.addAll(entregasOrigen);
+	                	  entregasOrigen.clear();
+	                  }
+	                  
+	                  void removerTodos(){
+	                	  entregasOrigen = lbEntregasOrigen.getModel();
+	                	  entregasDestino = lbEntregasDestino.getModel();
+	                	  entregasOrigen.addAll(entregasDestino);
+	                	  entregasDestino.clear();
+	                  }
+				]]></zscript>
+			</vbox>
+			<listbox model="@{entregasDestino}" width="250px" height="200px" id="lbEntregasDestino" selectedItem="@{entregaDestinoSel}"
+			 mold="paging" multiple="false" pageSize="8" fixedLayout="true">
+			 <zscript><![CDATA[lbEntregasDestino.getPagingChild().setMold("os"); ]]></zscript>
+				<listitem self="@{each=entDes}" >
+					<listcell>
+						<hbox>
+							<label value="@{entDes.idEntrega}" />
+							<label value="@{entDes.notaVenta.cliente.nombreCliente}" />		
+							<datebox value="@{entDes.fecha_estimadaEntrega}" readonly="true" style="border:none;" buttonVisible="false" ></datebox>
+						</hbox>
+					</listcell>
+				</listitem>
+			</listbox>
+		</hbox>
+		</div>
+		<div align="right">
+			<button image="/img/database.png" label="Aceptar" onClick="ingresarDespacho();" />
+			<button image="/img/arrow_left.png" label="Volver" onClick="volverNuev()" />
+			<zscript><![CDATA[
+				void ingresarDespacho(){
+					boolean valida = despachosWin.validarDespacho(despachoNuev,entregasDestino,vehiculoSel);
+					if(valida){
+						boolean ok = despachosWin.ingresarDespacho(despachoNuev,entregasDestino,vehiculoSel);
+						if(ok){
+							Messagebox.show("Operación realizada con exito","Información",Messagebox.OK,Messagebox.INFORMATION);
+							busquedaGb.setVisible(true);
+							gbNuevDesp.setVisible(false);
+							buscarDespachos();
+						}else{
+							Messagebox.show(despachosWin.getErrorMessage(),"Error",Messagebox.OK,Messagebox.ERROR);
+						}
+					}else{
+						Messagebox.show(despachosWin.getErrorMessage(),"Alerta",Messagebox.OK,Messagebox.EXCLAMATION);
+					}
+				}
+				
+				void volverNuev(){
+					busquedaGb.setVisible(true);
+					gbNuevDesp.setVisible(false);
+				}
+			]]></zscript>
+		</div>
+	</groupbox>
+</groupbox>
+<groupbox id="gbModificaDespacho" visible="false" closable="false" >
+	<caption label="Modificar Despacho" />
+	<space height="5px"/>
+		En esta pantalla usted podrá modificar, si quiere quitar una entrega del listado\n
+		debera marcarla como pendiente.
+	<space height="5px"/>
+	<zscript><![CDATA[
+	     Entrega entregaSelModif = null;
+	]]></zscript>
+	<groupbox closable="false">
+		<div align="center" >
+		<grid width="350px" style="border:none;" >
+			<rows style="border:none;" >
+				<row style="border:none;">
+					<label value="N° Despacho: " style="font-weight:bold;" />
+					<label value="@{seleccionado.idDespacho}" />	
+				</row>
+				<row style="border:none;">
+					<label value="Fecha Despacho: " style="font-weight:bold;" />
+					<datebox id="modifDateBox" value="@{seleccionado.fecha}" readonly="true" buttonVisible="true" ></datebox>	
+				</row>
+				<row style="border:none;">
+					<label value="Patente Vehiculo: " style="font-weight:bold;" />
+					<label value="@{seleccionado.vehiculo.patenteVehiculo}" />	
+				</row>
+				<row style="border:none;">
+					<label value="Modelo Vehiculo: " style="font-weight:bold;" />
+					<label value="@{seleccionado.vehiculo.descripcion}" />	
+				</row>
+			</rows>
+		</grid>
+		<listbox model="@{entregasDespachosMSel}" width="425px" id="listboxModifDespachoSel" mold="paging" pageSize="7"
+		selectedItem="@{entregaSelModif}" onSelect="actualizarSeleccionado()">
+			<zscript><![CDATA[listboxModifDespachoSel.getPagingChild().setMold("os"); ]]></zscript>
+			<listhead>
+					<listheader label="Nº" width="50px" sort="auto(idEntrega)" />
+					<listheader label="F. Estimada" width="100px" sort="auto(fecha_estimadaEntrega)" />
+					<listheader label="Total Neto" width="100px" sort="auto(totalNeto)" />
+					<listheader label="Estado" width="75px" sort="auto(textoEstadoDespacho)" />
+			</listhead>
+			<listitem self="@{each=entregasMsel}">
+				<listcell label="@{entregasMsel.idEntrega}" ></listcell>
+				<listcell>
+					<datebox value="@{entregasMsel.fecha_estimadaEntrega}" readonly="true" buttonVisible="false" style="border:none;" ></datebox>
+				</listcell>
+				<listcell>
+					<decimalbox readonly="true" format="$###,###,###.##" value="@{entregasMsel.totalNeto}" ></decimalbox>
+				</listcell>
+				<listcell label="@{entregasMsel.textoEstadoDespacho}" >
+				</listcell>				
+			</listitem>
+		</listbox>
+		<zscript><![CDATA[ 
+				void actualizarSeleccionado(){
+					modifGrid.setVisible(true);
+					for(AbstractComponent compo: comboModifEstadoSel.getChildren()){
+						if(compo instanceof Comboitem){
+							Comboitem item = (Comboitem)compo;
+							if(item.getValue().equals(""+entregaSelModif.getEstadoEntrega())){
+								comboModifEstadoSel.setSelectedItem(item);
+							}
+						}	
+					}
+				}
+		]]></zscript>
+		<space height="5px" />	
+		<grid width="400px" id="modifGrid" visible="false" >
+			<auxhead>
+				<auxheader>
+					Entrega Seleccionada
+				</auxheader>
+			</auxhead>
+			<rows>
+				<row>
+					<label value="Numero Entrega: "></label>
+					<label value="@{entregaSelModif.idEntrega}" />
+				</row>
+				<row>
+					<label value="Fecha Estimada: "></label>
+					<label value="@{entregaSelModif.idEntrega}" />
+				</row>
+				<row>
+					<label value="Estado: "></label>
+					<combobox id="comboModifEstadoSel" onChange="seleccionaEstadoModif();">
+						<comboitem label="Asignada" value="1" >
+						</comboitem>
+						<comboitem label="Pendiente" value="2" >
+						</comboitem>
+						<comboitem label="Cerrada" value="3" >
+						</comboitem>
+					</combobox>
+					<zscript><![CDATA[
+						void seleccionaEstadoModif(){
+							String valor = comboModifEstadoSel.getSelectedItem().getValue().toString();
+							int val = Integer.valueOf(valor).intValue();
+							entregasDespachosMSel = listboxModifDespachoSel.getModel();
+							entregasDespachosMSel.remove(entregaSelModif);
+							entregaSelModif.setEstadoEntrega(val);
+							entregasDespachosMSel.add(entregaSelModif);
+						}
+					]]></zscript>
+				</row>
+			</rows>
+		</grid>
+		<hbox>
+			<button image="/img/database.png" label="Aceptar" onClick="modificarDespacho();" />
+			<button image="/img/arrow_left.png" label="Volver" onClick="volverModif();" />
+		</hbox>
+		<zscript><![CDATA[
+                  void modificarDespacho(){
+                	  if(despachosWin.modificarDespacho(seleccionado,entregasDespachosMSel)){
+                		  Messagebox.show("Operación realizada con exito","Información",Messagebox.OK,Messagebox.INFORMATION);
+						  busquedaGb.setVisible(true);
+						  gbModificaDespacho.setVisible(false);
+						  modifGrid.setVisible(false);
+						  entregasDespachosMSel = listboxModifDespachoSel.getModel();
+						  entregasDespachosMSel.clear();
+						  buscarDespachos();
+                	  }else{
+                		  Messagebox.show(despachosWin.getErrorMessage(),"Error",Messagebox.OK,Messagebox.ERROR);
+                	  }
+                  }
+                  
+                  void volverModif(){
+                	  busquedaGb.setVisible(true);
+					  gbModificaDespacho.setVisible(false);
+					  modifGrid.setVisible(false);
+					  entregasDespachosMSel = listboxModifDespachoSel.getModel();
+					  entregasDespachosMSel.clear();
+                  }
+		]]></zscript>
+		</div>
+	</groupbox>
+</groupbox>
+</window>
+</zk>

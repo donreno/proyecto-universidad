@@ -1,0 +1,77 @@
+<?page title="Mantenimiento de Cargos" contentType="text/html;charset=UTF-8"?>
+<zk>
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit" arg0="./mantCargo"?>
+<window id="mantCargo" title="Mantenimiento de Cargos" width="550px" border="normal"
+ use="cl.envaflex.ui.MantenimientoCargoWin" >
+	<zscript><![CDATA[
+		import cl.envaflex.jpa.model.Cargo;
+		List cargos = mantCargo.findAllCargos();
+		Cargo seleccionado = (Cargo)cargos.get(0);
+		
+		if(mantCargo.getPreviousSibling()==null){
+	    	execution.sendRedirect("main.zul");
+	    }
+	]]></zscript>
+	<listbox id="listCargos" mold="paging"  model="@{cargos}"  selectedItem="@{seleccionado}" pageSize="5">
+	  <listhead>
+	  	<listheader label="Código" sort="auto(idCargo)" ></listheader>
+	  	<listheader label="Nombre" sort="auto(nombreCargo)"></listheader>
+	  </listhead>
+	  <listitem self="@{each=cargo}" >
+	    <listcell label="@{cargo.idCargo}"/>
+	    <listcell label="@{cargo.nombreCargo}" />
+	  </listitem>
+	</listbox>
+	<grid>
+	  <rows>
+	    <row>Código: <textbox value="@{seleccionado.idCargo}" maxlength="5" /></row>
+	    <row>Nombre: <textbox value="@{seleccionado.nombreCargo}" maxlength="30" /></row>
+	    <row>Detalle: <textbox value="@{seleccionado.descCargo}" maxlength="200" rows="3" /></row>
+	  </rows>
+	</grid>
+	<div align="right" >
+		<button image="/img/agregar.png" label="Nuevo Cargo" onClick="ingresar();" />
+		<button image="/img/editar.png" label="Modificar" onClick="modificar();" />
+		<button image="/img/remover.png" label="Remover" onClick="eliminar();" />
+	</div>
+	<zscript><![CDATA[
+		
+		void eliminar(){
+			boolean res = mantCargo.remover(seleccionado);
+			if(res==true){
+				Messagebox.show("Operación realizada con Exito.","Información",Messagebox.OK,Messagebox.INFORMATION);
+				actualizarDatos();
+			}else{
+				Messagebox.show("Ocurrio un Error realizando la Operación.","Error",Messagebox.OK,Messagebox.ERROR);
+			}
+		}
+		
+		void modificar(){
+			boolean res = mantCargo.actualizar(seleccionado);
+			if(res==true){
+				Messagebox.show("Operación realizada con Exito.","Información",Messagebox.OK,Messagebox.INFORMATION);
+				actualizarDatos();
+			}else{
+				Messagebox.show("Ocurrio un Error realizando la Operación.","Error",Messagebox.OK,Messagebox.ERROR);
+			}
+		}
+		
+		void ingresar(){
+			boolean res = mantCargo.agregar(seleccionado);
+			if(res==true){
+				Messagebox.show("Operación realizada con Exito.","Información",Messagebox.OK,Messagebox.INFORMATION);
+				actualizarDatos();
+			}else{
+				Messagebox.show("Ocurrio un Error realizando la Operación.","Error",Messagebox.OK,Messagebox.ERROR);
+			}
+		}
+		
+		void actualizarDatos(){
+			cargos = listCargos.getModel();
+			cargos.clear();
+			cargos.addAll(mantCargo.findAllCargos());
+		}
+		
+	]]></zscript>
+</window>
+</zk>

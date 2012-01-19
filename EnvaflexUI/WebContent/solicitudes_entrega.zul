@@ -1,0 +1,173 @@
+<?page title="Cotizaciones" contentType="text/html;charset=UTF-8"?>
+<zk>
+<window title="Solicitudes de Entrega" width="650px" border="normal">
+<groupbox id="buscaSolEntrega" closable="false" >
+	<caption label="Busqueda"/>
+	<vbox>
+		<hbox>
+			<label value="Numero: " />
+			<separator width="10px" />
+			<intbox />
+			<separator width="100%" />
+		</hbox>
+		<hbox>
+			<label value="Fecha desde: " />
+			<separator width="10px" />
+			<datebox />
+			<separator width="25px" />
+			<label value="Fecha hasta: " />
+			<separator width="10px" />
+			<datebox />
+		</hbox>
+		<hbox>
+			<label value="Cliente: " />
+			<separator width="10px" />
+			<bandbox>
+			<bandpopup width="300px">
+				<listbox fixedLayout="true" >
+					<listhead>
+						<listheader label="Rut" sort="auto" />
+						<listheader label="Nombre" sort="auto" />
+					</listhead>
+					<listitem>
+						<listcell label="13123-4" />
+						<listcell label="Verduras Verdurosas" />
+					</listitem>
+					<listitem>
+						<listcell label="1231-5" />
+						<listcell label="Helados Ruri" />
+					</listitem>
+				</listbox>
+			</bandpopup>
+			</bandbox>
+		</hbox>
+		<hbox>
+			<button image="/img/find.png" label="Buscar" />
+		</hbox>
+	</vbox>
+</groupbox>
+<separator height="10px" />
+<popup id="accionpop" width="300px">
+	<html>
+		Debe utilizar Doble Click para ejecutar las acciones.
+	</html>
+</popup>
+<listbox fixedLayout="true" mold="paging" >
+	<listhead>
+		<listheader label="Nº" width="40px" sort="auto" />
+		<listheader label="Fecha" />
+		<listheader label="Cliente" />
+		<listheader label="Total Neto" />
+		<listheader label="Iva" />
+		<listheader label="Total" />
+		<listheader label="Acciones" width="130px" image="/img/help.png" tooltip="accionpop" />
+	</listhead>
+	<listitem>
+		<listcell label="1" />
+		<listcell label="23/11/2008" />
+		<listcell label="Verduras Verdurosas" />
+		<listcell label="$155.000" />
+		<listcell label="$31.000" />
+		<listcell label="$186.000" />
+		<listcell>
+			<image src="/img/registrar.png" 
+			tooltiptext="Registrar Venta"
+			onDoubleClick="registraVta();" />
+			<image src="/img/compra.png" 
+			tooltiptext="Solicitar Compra de Productos"
+			onDoubleClick="solicitarCompra();" />
+			<image src="/img/realiza_despacho.png" 
+			tooltiptext="Realizar Despacho"
+			onDoubleClick="realizaDespacho();" />
+			<image src="/img/anular.png" 
+			tooltiptext="Anular"
+			onDoubleClick="doAnular();" />
+		</listcell>
+	</listitem>
+	<listitem>
+		<listcell label="2" />
+		<listcell label="23/11/2008" />
+		<listcell label="Verduras Verdurosas" />
+		<listcell label="$155.000" />
+		<listcell label="$31.000" />
+		<listcell label="$186.000" />
+		<listcell>
+			<image src="/img/registrar.png" 
+			tooltiptext="Registrar Venta"
+			onDoubleClick="registraVta();" />
+			<image src="/img/compra.png" 
+			tooltiptext="Solicitar Compra de Productos"
+			onDoubleClick="solicitarCompra();" />
+			<image src="/img/realiza_despacho.png" 
+			tooltiptext="Realizar Despacho"
+			onDoubleClick="realizaDespacho();" />
+			<image src="/img/anular.png" 
+			tooltiptext="Anular"
+			onDoubleClick="doAnular();" />
+		</listcell>
+	</listitem>
+	<listitem>
+		<listcell label="3" />
+		<listcell label="23/11/2008" />
+		<listcell label="Verduras Verdurosas" />
+		<listcell label="$155.000" />
+		<listcell label="$31.000" />
+		<listcell label="$186.000" />
+		<listcell>
+			<image src="/img/registrar.png" 
+			tooltiptext="Registrar Venta"
+			onDoubleClick="registraVta();" />
+			<image src="/img/compra.png" 
+			tooltiptext="Solicitar Compra de Productos"
+			onDoubleClick="solicitarCompra();" />
+			<image src="/img/realiza_despacho.png" 
+			tooltiptext="Realizar Despacho"
+			onDoubleClick="realizaDespacho();" />
+			<image src="/img/anular.png" 
+			tooltiptext="Anular"
+			onDoubleClick="doAnular();" />
+		</listcell>
+	</listitem>
+	<listitem>
+		<listcell label="4" />
+		<listcell label="23/11/2008" />
+		<listcell label="Verduras Verdurosas" />
+		<listcell label="$155.000" />
+		<listcell label="$31.000" />
+		<listcell label="$186.000" />
+		<listcell>
+			<image src="/img/registrar.png" 
+			tooltiptext="Registrar Venta"
+			onDoubleClick="registraVta();" />
+			<image src="/img/compra.png" 
+			tooltiptext="Solicitar Compra de Productos"
+			onDoubleClick="solicitarCompra();" />
+			<image src="/img/realiza_despacho.png" 
+			tooltiptext="Realizar Despacho"
+			onDoubleClick="realizaDespacho();" />
+			<image src="/img/anular.png" 
+			tooltiptext="Anular"
+			onDoubleClick="doAnular();" />
+		</listcell>
+	</listitem>
+</listbox>
+<zscript><![CDATA[
+	void registraVta(){
+		execution.sendRedirect("prototipo_registrar_venta.zul");
+	}
+	
+	void solicitarCompra(){
+		alert("Se ha solicitado la compra de productos, cuando esta sea atendida \n"+
+				" se podra continuar con el proceso.");
+	}
+	
+	void realizaDespacho(){
+		execution.sendRedirect("prototipo_realizar_despacho.zul");
+	}
+	
+	void doAnular(){
+		alert("Se anula la venta");
+	}
+]]></zscript>
+</window>
+</zk>

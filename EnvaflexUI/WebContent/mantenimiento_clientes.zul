@@ -1,0 +1,84 @@
+<?page title="Mantenimiento de Clientes" contentType="text/html;charset=UTF-8"?>
+<zk>
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit" arg0="./mantClientes"?>
+<window id="mantClientes" title="Mantenimiento de Clientes" width="550px" border="normal"
+ use="cl.envaflex.ui.MantenimientoClientesWin" >
+	<zscript><![CDATA[
+		import cl.envaflex.jpa.model.Cliente;
+		List clientes = mantClientes.findAllClientes();
+		Cliente seleccionado = (Cliente)clientes.get(0);
+		
+		if(mantClientes.getPreviousSibling()==null){
+	    	execution.sendRedirect("main.zul");
+	    }
+	]]></zscript>
+	<listbox id="listClientes" mold="paging"  model="@{clientes}" checkmark="true"
+	multiple="false"  selectedItem="@{seleccionado}" pageSize="5">
+	  <listhead>
+	  	<listheader label="Código" sort="auto(idCliente)" ></listheader>
+	  	<listheader label="Rut" sort="auto(rutCliente)"></listheader>
+	  	<listheader label="Nombre" sort="auto(nombreCliente)"></listheader>
+	  </listhead>
+	  <listitem self="@{each=cliente}" >
+	    <listcell label="@{cliente.idCliente}"/>
+	    <listcell>
+	    	<div>
+	    	<label value="@{cliente.rutCliente}" />-<label value="@{cliente.dvCliente}" />
+	    	</div>
+	    </listcell>
+	    <listcell label="@{cliente.nombreCliente}" />
+	  </listitem>
+	</listbox>
+	<grid>
+	  <rows>
+	    <row>Código: <textbox value="@{seleccionado.idCliente}" maxlength="5" /></row>
+	    <row>Rut: <textbox value="@{seleccionado.rutCliente}" maxlength="30" /></row>
+	    <row>Nombre: <textbox value="@{seleccionado.nombreCliente}" maxlength="200" rows="3" /></row>
+	  </rows>
+	</grid>
+	<div align="right" >
+		<button image="/img/agregar.png" label="Nuevo Cargo" onClick="ingresar();" />
+		<button image="/img/editar.png" label="Modificar" onClick="modificar();" />
+		<button image="/img/remover.png" label="Remover" onClick="eliminar();" />
+	</div>
+	<zscript><![CDATA[
+		
+		void eliminar(){
+			boolean res = mantClientes.remover(seleccionado);
+			if(res==true){
+				Messagebox.show("Operación realizada con Exito.","Información",Messagebox.OK,Messagebox.INFORMATION);
+				actualizarDatos();
+			}else{
+				Messagebox.show("Ocurrio un Error realizando la Operación.","Error",Messagebox.OK,Messagebox.ERROR);
+			}
+		}
+		
+		void modificar(){
+			boolean res = mantClientes.actualizar(seleccionado);
+			if(res==true){
+				Messagebox.show("Operación realizada con Exito.","Información",Messagebox.OK,Messagebox.INFORMATION);
+				actualizarDatos();
+			}else{
+				Messagebox.show("Ocurrio un Error realizando la Operación.","Error",Messagebox.OK,Messagebox.ERROR);
+			}
+		}
+		
+		void ingresar(){
+			boolean res = mantClientes.agregar(seleccionado);
+			if(res==true){
+				Messagebox.show("Operación realizada con Exito.","Información",Messagebox.OK,Messagebox.INFORMATION);
+				actualizarDatos();
+			}else{
+				Messagebox.show("Ocurrio un Error realizando la Operación.","Error",Messagebox.OK,Messagebox.ERROR);
+			}
+		}
+		
+		void actualizarDatos(){
+			clientes = listClientes.getModel();
+			clientes.clear();
+			clientes.addAll(mantClientes.findAllClientes());
+		}
+		
+	]]></zscript>
+</window>
+</zk>

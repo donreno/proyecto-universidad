@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+	Created by ZK Studio
+-->
+
+<zk>
+	<session-config>
+		<device-type>ajax</device-type>
+		<automatic-timeout/> <!-- the same as <automatic-timeout>true</automatic-timeout> -->
+		<timeout-uri>/main.zul</timeout-uri>
+	</session-config>
+</zk>

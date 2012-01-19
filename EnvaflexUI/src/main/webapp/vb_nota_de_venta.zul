@@ -1,0 +1,48 @@
+<?page title="Visto Bueno a Nota de Venta" contentType="text/html;charset=UTF-8"?>
+<zk>
+<window title="Dar VB° a Nota de Venta" id="vBnotaWin" width="300px" border="normal">
+	<groupbox id="loginVBgb">
+		<grid>
+			<rows>
+				<row>
+					<label value="Usuario" />
+					<textbox maxlength="16"></textbox>
+				</row>
+				<row>
+					<label value="Password" />
+					<textbox type="password" maxlength="16" ></textbox>
+				</row>
+			</rows>
+		</grid>
+		<div align="center" >
+			<button label="Aceptar"  >
+				<attribute name="onClick">
+					loginVBgb.setVisible(false);
+					darVBgb.setVisible(true);
+				</attribute>
+			</button>
+		</div>
+	</groupbox>
+	<groupbox id="darVBgb" visible="false">
+		<grid>
+			<rows>
+				<row>
+					<label value="N° Orden" />
+					<label value="354" />
+				</row>
+				<row>
+					<label value="Total Neto" />
+					<label value="$2451663" />
+				</row>
+				<row>
+					<label value="VB°" />
+					<checkbox />
+				</row>
+			</rows>
+		</grid>
+		<div align="center" >
+			<button label="Aplicar" onClick="vBnotaWin.detach();" />
+		</div>
+	</groupbox>
+</window>
+</zk>

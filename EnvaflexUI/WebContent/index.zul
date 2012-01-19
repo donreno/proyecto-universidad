@@ -1,0 +1,10 @@
+<?page title="Auto Generated index.zul"?>
+<window border="none">
+	<vbox>
+	<image src="/img/logoEnvaflex.png"></image>
+	<zscript><![CDATA[ 
+       execution.sendRedirect("main.zul");
+	]]></zscript>
+	Usted esta siendo redireccionado a nuestro escritorio.
+	</vbox>
+</window>

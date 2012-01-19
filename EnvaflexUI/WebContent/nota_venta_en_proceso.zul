@@ -1,0 +1,466 @@
+<?page title="Nota de Venta en Proceso" contentType="text/html;charset=UTF-8"?>
+<zk>
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit" arg0="./notaVtaWin"?>
+<window id="notaVtaWin" title="Notas de venta en Proceso" sizable="true"  width="900px" border="normal"
+use="cl.envaflex.ui.NotaVentaEnProcesoWin">
+<zscript><![CDATA[ 
+	import cl.envaflex.jpa.model.Cliente;
+	import cl.envaflex.jpa.model.NotaVenta;
+	Map parametros = new HashMap();
+	Cliente buscaCliente;
+	List clientes = notaVtaWin.findAllClientes();
+	List productos = notaVtaWin.findAllProductos();
+	List notasVta = new ArrayList();
+	
+	NotaVenta nuevaNota = new NotaVenta();
+	NotaVenta seleccionado;
+	
+	if(notaVtaWin.getPreviousSibling()==null){
+    	execution.sendRedirect("main.zul");
+    }
+]]></zscript>
+<groupbox id="buscaNotaProcgb" closable="false" >
+	<caption label="Busqueda de Notas de venta en Proceso"/>
+	<grid>
+		<rows>
+		<row>
+			<label value="Numero: " />
+			<intbox value="@{parametros.num}" />
+		</row>
+		<row>
+			<label value="Fecha:" />
+			<hbox>
+				<vbox>
+				Desde:
+				<datebox value="@{parametros.fecha_desde}" />
+				</vbox>
+				<vbox>
+				Hasta:
+				<datebox value="@{parametros.fecha_hasta}"  />
+				</vbox>
+			</hbox>
+		</row>
+		<row>
+			<label value="Cliente: " />
+			<bandbox id="clieSearchbd" 
+			value="@{buscaCliente.nombreCliente}" readonly="true"
+			onOpen="recargarClientes(searchClieListbox);" >
+			<zscript><![CDATA[ 
+				void recargarClientes(Listbox lista){
+					clientes = lista.getModel();
+					clientes.clear();
+					clientes.addAll(notaVtaWin.findAllClientes());
+				}
+			]]></zscript>
+			<bandpopup width="350px">
+				<listbox id="searchClieListbox" model="@{clientes}" onSelect="clieSearchbd.closeDropdown();"  
+				selectedItem="@{buscaCliente}" multiple="false" checkmark="true"
+				mold="paging" pageSize="4" fixedLayout="true" >
+					<listhead>
+						<listheader label="Id" sort="auto(idCliente)" />
+						<listheader label="RUT" sort="auto(rutCliente)" />
+						<listheader label="Nombre" sort="auto(nombreCliente)" />
+					</listhead>
+					<listitem self="@{each=clie1}" >
+						<listcell label="@{clie1.idCliente}" />
+						<listcell label="@{clie1.rutCliente}" />
+						<listcell label="@{clie1.nombreCliente}" />
+					</listitem>
+				</listbox>
+			</bandpopup>
+			</bandbox>
+		</row>
+		</rows>
+	</grid>
+	<hbox>
+		<button image="/img/find.png" label="Buscar" onClick="buscarCotiz();" />
+		<zscript><![CDATA[ 
+			void buscarCotiz(){
+				notasVta = notasListbox.getModel();
+				parametros.put("cliente",buscaCliente);
+				notasVta.clear();
+				Date fecha_hasta = parametros.get("fecha_hasta");
+				Date fecha_desde = parametros.get("fecha_desde");
+				Long num = parametros.get("num");
+				notasVta.addAll(notaVtaWin.findNotasVta(buscaCliente.getIdCliente(),num,fecha_desde,fecha_hasta));
+			}
+		]]></zscript>
+	</hbox>
+	<separator height="15px"></separator>
+	<hbox>
+		<groupbox>
+			<caption label="Resultado"></caption>
+			<listbox id="notasListbox" model="@{notasVta}" width="475px" selectedItem="@{seleccionado}" 
+			fixedLayout="true" multiple="false" checkmark="true" mold="paging" pageSize="7"
+			onSelect='goDetalle();'>
+			<zscript><![CDATA[notasListbox.getPagingChild().setMold("os"); ]]></zscript>
+				<listhead>
+					<listheader label="Nº" width="50px" sort="auto(idNotaVenta)" />
+					<listheader label="Fecha" width="100px" sort="auto(fechaCotizacion)" />
+					<listheader label="Cliente" width="100px" sort="auto(cliente_idCliente)" />
+					<listheader label="Total Neto" width="75px" sort="auto(totalNeto)" />
+					<listheader label="Iva" width="75px" sort="auto(iva)" />
+					<listheader label="Total" width="75px" sort="auto(total)" />
+				</listhead>
+				<listitem self="@{each=nota}" >
+					<listcell label="@{nota.idNotaVenta}" />
+					<listcell>
+						<datebox style="border:none;" value="@{nota.fechaCotizacion}" readonly="true" buttonVisible="false"></datebox>
+					</listcell>
+					<listcell label="@{nota.cliente.nombreCliente}" />
+					<listcell>
+						<decimalbox value="@{nota.totalNeto}" style="font-weight:bold;border:none;"
+									 		format="$###,###.##" readonly="true" />
+					</listcell>
+					<listcell>
+						<decimalbox value="@{nota.iva}" style="font-weight:bold;border:none;"
+									 		format="$###,###.##" readonly="true" />
+					</listcell>
+					<listcell>
+						<decimalbox value="@{nota.total}" style="font-weight:bold;border:none;"
+									 		format="$###,###.##" readonly="true" />
+					</listcell>
+				</listitem>
+			</listbox>
+		</groupbox>
+		<groupbox id="detalleNotaProcgb" visible="false" > 
+			<caption label="Detalle de Nota de Venta en Proceso" />
+			<vbox>
+				<hbox>
+					<label value="N°" />
+					<separator width="10px" />
+					<label value="@{seleccionado.idNotaVenta}" />
+				</hbox>
+				<hbox>
+					<label value="Cliente: " />
+					<separator width="10px" />
+					<label value="@{seleccionado.cliente.nombreCliente}" />
+				</hbox>
+				<hbox>
+					<vbox>
+						<zscript><![CDATA[
+						     List detallesNota = new ArrayList();
+						]]></zscript>
+						<listbox id="detalleNotaDetalleListbox" model="@{detallesNota}"
+						 mold="paging" fixedLayout="true" pageSize="5"  >
+							<listhead>
+								<listheader label="Producto" sort="auto(producto_idProducto)" />
+								<listheader label="Precio Unitario" sort="auto(precioUnitario)" />
+								<listheader label="Cantidad" sort="auto(cantidadProducto)" />
+								<listheader label="Total Producto" sort="auto(totalProdutco)" />
+								<listheader label="estado" sort="auto(estadoEntrega)" />
+							</listhead>
+							<listitem self="@{each=detallnota}">
+								<listcell label="@{detallnota.producto.nombreProducto}" />
+								<listcell >
+									<decimalbox value="@{detallnota.precioUnitario}" style="font-weight:bold;border:none;"
+								 		format="$###,###.##" readonly="true" />
+								</listcell>
+								<listcell label="@{detallnota.cantidadProducto}" />
+								<listcell >
+									<decimalbox value="@{detallnota.totalProducto}" style="font-weight:bold;border:none;"
+								 		format="$###,###.##" readonly="true" />
+								</listcell>
+								<listcell label="@{detallnota.textoEstadoEntrega}" />
+							</listitem>
+							<listfoot>
+								<listfooter>
+									<vbox>
+										<label style="font-weight:bold;font-size:11;" value="Total Neto"></label>
+										<label style="font-weight:bold;font-size:11;" value="Iva"></label>
+										<label style="font-weight:bold;font-size:11;" value="Total"></label>
+									</vbox>
+								</listfooter>
+								<listfooter></listfooter>
+								<listfooter></listfooter>
+								<listfooter>
+									<vbox>
+										<decimalbox  value="@{seleccionado.totalNeto}" style="font-weight:bold;font-size:11;border:none;"
+								 		format="$###,###.##" readonly="true"  />
+								 		<decimalbox  value="@{seleccionado.iva}" style="font-weight:bold;font-size:11;border:none;"
+								 		format="$###,###.##" readonly="true"  />
+								 		<decimalbox  value="@{seleccionado.total}" style="font-weight:bold;font-size:11;border:none;"
+								 		format="$###,###.##" readonly="true"   />
+									</vbox>
+								</listfooter>
+							</listfoot>
+						</listbox>
+						<separator bar="true"/>
+						<div align="right">
+								<button label="Exportar" image="/img/doc_excel_table.png"
+								onClick="aceptar();" ></button>
+								<!-- button image="/img/arrow_left.png" label="Volver" onClick="volver();" / -->
+							<zscript><![CDATA[					
+								void aceptar(){
+									org.zkoss.zul.Filedownload.save("/dwn/notaVenta.xls",null);
+								}
+								
+								void volver(){
+									buscaNotaProcgb.setVisible(true);
+									notaVtaWin.setWidth("650");
+									detalleNotaProcgb.setVisible(false);
+								}
+							]]></zscript>
+						</div>
+					</vbox>
+				</hbox>
+			</vbox>
+		</groupbox>
+	</hbox>
+</groupbox>
+
+<groupbox id="nuevaSolEntgb" visible="false" closable="false" >
+	<caption label="Nueva solicitud de Entrega" />
+	<space height="5px"></space>
+	<div>
+		Aqui usted podra realizar una nueva solicitud de Entrega (Despacho).
+	</div>
+	<space height="5px"></space>
+	<grid>
+		<rows>
+			<row>
+				<label value="Entrega en Local?: " />
+				<radiogroup id="localRadio">
+					<radio label="Si" selected="false">
+					</radio>
+					<radio label="No" selected="true">
+					</radio>
+				</radiogroup>
+			</row>
+			<row>
+				<label value="Es entrega Express?" />
+				<vbox>
+					<checkbox id="checkExpress" label="Si" checked="false" />
+					<zscript><![CDATA[
+                  		import java.math.BigDecimal;
+                  		
+                  		BigDecimal cobAdicional = notaVtaWin.getRecargoExpress();
+                  		
+					]]></zscript>
+					<hbox style="font-weight:bold;color:red;">
+						<label style="font-weight:bold;color:red;" value="La entrega Express tiene un cobro adicional de " />
+						<decimalbox style="border:none;font-weight:bold;color:red;" readonly="true" width="50px" value="@{cobAdicional}" format="$###,###,###.##" ></decimalbox>.
+					</hbox>	
+				</vbox>	
+			</row>
+			<row>
+				<label value="Fecha Estimada de Despacho" />
+				<datebox id="solEntFec" readonly="true" value="@{solEntregaDestino.fecha_estimadaEntrega}" />
+				<zscript><![CDATA[
+				     import cl.envaflex.ui.util.DateUtils;             
+				     Date fechaLim = DateUtils.sumarDias(new Date(),notaVtaWin.getMargenEntrega());
+				     solEntFec.setValue(fechaLim);
+				     String constraintFec = DateUtils.fechaToString(fechaLim,DateUtils.FORMATO_YYYYMMDD);
+				     solEntFec.setConstraint("after "+constraintFec+", no empty");
+				]]></zscript>
+			</row>
+		</rows>
+	</grid>
+	<vbox>
+		<zscript><![CDATA[
+			import cl.envaflex.jpa.model.DetalleEntrega;
+			List detallesEntregaOrigen = new ArrayList();
+			List detallesEntregaDestino = new ArrayList();
+			DetalleEntrega detalleEntregaSel = null;
+			DetalleEntrega detalleEntregaSelD = null;
+		]]></zscript>
+		<space height="5px" ></space>
+		Seleccione los items para Solicitar La Entrega
+		<space height="5px" ></space>
+		<hbox>
+		<listbox model="@{detallesEntregaOrigen}" width="250px" height="200px" id="nuevSolDetalleListbox" selectedItem="@{detalleEntregaSel}"
+		 mold="paging" multiple="false" pageSize="5" fixedLayout="true">
+			<listitem self="@{each=detNuev}" >
+				<listcell>
+					<hbox>
+						<label value="@{detNuev.producto.nombreProducto}" />	
+						<decimalbox value="@{detNuev.precioUnitario}" readonly="true" format="$###,###,###.##" 
+						style="font-weight:bold;border:none;" ></decimalbox>
+					</hbox>
+				</listcell>
+			</listitem>
+			<listfoot>
+			</listfoot>
+		</listbox>
+		<vbox>
+			<space height="40px" ></space>
+			<button label="> " onClick="agregarUno();"></button>
+			<button label=">>" onClick="agregarTodos();"></button>
+			<button label="&lt; " onClick="removerUno();"></button>
+			<button label="&lt;&lt;" onClick="removerTodos();"></button>
+			<zscript><![CDATA[
+                  void agregarUno(){
+                	  if(detalleEntregaSel!=null){
+	                	  detallesEntregaOrigen = nuevSolDetalleListbox.getModel();
+	                	  detallesEntregaDestino = nuevSolDetalleListboxD.getModel();
+	                	  detallesEntregaDestino.add(detalleEntregaSel);
+	                	  detallesEntregaOrigen.remove(detalleEntregaSel);
+	                	  detalleEntregaSel = null;
+                	  }
+                	  actualizarSolicitudEntrega();
+                  }
+                  
+                  void removerUno(){
+                	  if(detalleEntregaSelD!=null){
+	                	  detallesEntregaOrigen = nuevSolDetalleListbox.getModel();
+	                	  detallesEntregaDestino = nuevSolDetalleListboxD.getModel();
+	                	  detallesEntregaOrigen.add(detalleEntregaSelD);
+	                	  detallesEntregaDestino.remove(detalleEntregaSelD);
+	                	  detalleEntregaSelD = null;
+                	  }
+                	  actualizarSolicitudEntrega();
+                  }
+                  
+                  void agregarTodos(){
+                	  detallesEntregaOrigen = nuevSolDetalleListbox.getModel();
+                	  detallesEntregaDestino = nuevSolDetalleListboxD.getModel();
+                	  detallesEntregaDestino.addAll(detallesEntregaOrigen);
+                	  detallesEntregaOrigen.clear();
+                	  actualizarSolicitudEntrega();
+                  }
+                  
+                  void removerTodos(){
+                	  detallesEntregaOrigen = nuevSolDetalleListbox.getModel();
+                	  detallesEntregaDestino = nuevSolDetalleListboxD.getModel();
+                	  detallesEntregaOrigen.addAll(detallesEntregaDestino);
+                	  detallesEntregaDestino.clear();
+                	  actualizarSolicitudEntrega();
+                  }
+			]]></zscript>
+		</vbox>
+		<listbox model="@{detallesEntregaDestino}" width="250px" height="200px" id="nuevSolDetalleListboxD" selectedItem="@{detalleEntregaSelD}"
+		 mold="paging" multiple="false" pageSize="5" fixedLayout="true">
+			<listitem self="@{each=detNuevD}" >
+				<listcell>
+					<hbox>
+						<label value="@{detNuevD.producto.nombreProducto}" />	
+						<decimalbox value="@{detNuevD.precioUnitario}" readonly="true" format="$###,###,###.##" 
+						style="font-weight:bold;border:none;" ></decimalbox>
+						<decimalbox value="@{detNuevD.cantidadEntrega}" readonly="true" format="###,###,###.##" 
+						style="font-weight:bold;border:none;" ></decimalbox>
+					</hbox>
+				</listcell>
+			</listitem>
+			<listfoot>
+			</listfoot>
+		</listbox>
+
+		</hbox>
+		<div  align="center" >
+			Este es el total de la nueva entrega, el total incluye el costo de envío.
+			<grid>
+				<rows>
+					<row>
+						<label value="TOTAL NETO" />
+						<decimalbox id="nuevaSolNetodb" readonly="true" style="font-weight:bold;font-size:11;border:none;"
+			 			format="$###,###,###.##" value="@{solEntregaDestino.totalNeto}" />	
+					</row>
+					<row>
+						<label value="IVA" />
+						<decimalbox id="nuevaSolIvadb" readonly="true" style="font-weight:bold;font-size:11;border:none;" 
+						format="$###,###,###.##" value="@{solEntregaDestino.iva}" />
+					</row>
+					<row>
+						<label value="TOTAL" />
+						<decimalbox id="nuevaSolTotaldb" readonly="true" style="font-weight:bold;font-size:11;border:none;" 
+						format="$###,###,###.##" value="@{solEntregaDestino.total}" />
+					</row>
+				</rows>
+			</grid>
+		</div>
+	</vbox>
+	<div align="right">
+		<button image="/img/database.png" label="Aceptar" onClick="doSolicitudesEntrega();" />
+		<button image="/img/arrow_left.png" label="Volver" onClick="volverNotasProc();" />
+	</div>
+	<zscript><![CDATA[
+		void doSolicitudesEntrega(){
+			if(notaVtaWin.validarCamposEntrega(solEntregaDestino,detallesEntregaDestino)){
+				if(notaVtaWin.procesarEntrega(solEntregaDestino,seleccionado,detallesEntregaDestino)){
+					Messagebox.show("Operación realizada con Exito.","Información",Messagebox.OK,Messagebox.INFORMATION);
+					nuevaSolEntgb.setVisible(false);
+					buscaNotaProcgb.setVisible(true);
+				}else{
+					Messagebox.show(notaVtaWin.getErrorMessage(),"Error",Messagebox.OK,Messagebox.ERROR);
+				}
+			}else{
+				Messagebox.show(notaVtaWin.getErrorMessage(),"Alerta",Messagebox.OK,Messagebox.EXCLAMATION);
+			}
+		}
+		
+		void volverNotasProc(){
+			nuevaSolEntgb.setVisible(false);
+			buscaNotaProcgb.setVisible(true);
+		}
+	]]></zscript>	
+</groupbox>
+<separator height="10px" />
+<separator bar="true"/>
+<!-- button image="/img/detalle.png" label="Detalle" onClick="goDetalle();" / -->
+<button image="/img/anular.png" label="Anular" onClick="doAnular();" />
+<button image="/img/proximo_paso.png" label="Solicitar Entrega" onClick="solEntrega();" />
+<div align="right">
+	<zscript><![CDATA[ 
+	    import cl.envaflex.jpa.model.Entrega;
+	    Entrega solEntregaOrigen = new Entrega();
+	    Entrega solEntregaDestino = new Entrega();
+
+	                  
+		void solEntrega(){
+			if(seleccionado!=null){
+				nuevaSolEntgb.setVisible(true);
+				buscaNotaProcgb.setVisible(false);
+				detalleNotaProcgb.setVisible(false);
+				solEntregaOrigen = notaVtaWin.nuevaEntregaOrigen(seleccionado);
+				//se limpia el origen
+				detallesEntregaOrigen = nuevSolDetalleListbox.getModel();
+				detallesEntregaOrigen.clear();
+				detallesEntregaOrigen.addAll(solEntregaOrigen.getDetallesEntrega());
+				//se limpia el destino
+				detallesEntregaDestino = nuevSolDetalleListboxD.getModel();
+				detallesEntregaDestino.clear();
+				notaVtaWin.setWidth("650");
+			}else{
+				alert("Debe Seleccionar una Nota de Venta.");
+			}
+		}
+		
+		void actualizarSolicitudEntrega(){
+			notaVtaWin.actualizarEntrega(solEntregaDestino,detallesEntregaDestino);
+		}
+		
+		void goDetalle(){
+			if(seleccionado!=null){
+				nuevaSolEntgb.setVisible(false);
+				detalleNotaProcgb.setVisible(true);
+				notaVtaWin.setWidth("900");
+				detallesNota = detalleNotaDetalleListbox.getModel();
+				detallesNota.clear();
+				detallesNota.addAll(notaVtaWin.findDetalleForNota(seleccionado));
+			}else{
+				alert("Debe Seleccionar una Nota de Venta.");
+			}	
+		}
+		
+		void doAnular(){
+			if(seleccionado!=null){
+				int resp = Messagebox.show("Esta seguro que desea anular el registro?",
+						"Pregunta", 
+						Messagebox.OK | Messagebox.CANCEL, Messagebox.QUESTION);
+				if(Messagebox.OK == resp){
+					boolean ok = notaVtaWin.anularNotaVenta(seleccionado);
+					if(ok){
+						Messagebox.show("Operación realizada con Exito.","Información",Messagebox.OK,Messagebox.INFORMATION);
+						buscarCotiz();
+					}else{
+						Messagebox.show(notaVtaWin.getErrorMessage(),"Error",Messagebox.OK,Messagebox.ERROR);
+					}	
+				}
+			}else{
+    			alert("Debe Seleccionar una Nota de Venta.");
+    		}	
+		}  
+	]]></zscript>
+</div>
+</window>
+</zk>

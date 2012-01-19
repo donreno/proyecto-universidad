@@ -1,0 +1,6 @@
+<?page title="Logout" contentType="text/html;charset=UTF-8"?>
+<zk>
+<window title="Logout" border="normal">
+Se ha cerrado la sesión
+</window>
+</zk>
