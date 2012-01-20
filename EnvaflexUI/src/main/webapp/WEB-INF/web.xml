@@ -10,8 +10,8 @@
 		<listener-class>org.zkoss.zk.ui.http.HttpSessionListener</listener-class>
 	</listener>
 	<context-param>
-		<param-name>conspring-config.xmltextConfigLocation</param-name>
-		<param-value>resources/spring-context.xml</param-value>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>resources/spring-config.xml</param-value>
 	</context-param>
 	<servlet>
 		<description>
