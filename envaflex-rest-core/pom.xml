@@ -5,19 +5,46 @@
 	<artifactId>envaflex-rest-core</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 	<properties>
-		<spring.version>3.0.1.RELEASE</spring.version>
+		<spring-security.version>3.0.5.RELEASE</spring-security.version>
+		<spring.version>3.1.0.RELEASE</spring.version>
 		<servlet-api.version>2.5.0</servlet-api.version>
 		<jackson.version>1.9.3</jackson.version>
+		<http.version>4.1.4</http.version>
 	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework</groupId>
-			<artifactId>spring-context</artifactId>
+			<artifactId>spring-beans</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-core</artifactId>
 			<version>${spring.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-web</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-web</artifactId>
+			<version>${spring-security.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-config</artifactId>
+			<version>${spring-security.version}</version>
+		</dependency>
+<!-- 		<dependency> -->
+<!-- 			<groupId>org.springframework</groupId> -->
+<!-- 			<artifactId>spring-tx</artifactId> -->
+<!-- 			<version>${spring.version}</version> -->
+<!-- 		</dependency> -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-aop</artifactId>
 			<version>${spring.version}</version>
 		</dependency>
 		<dependency>
@@ -44,17 +71,18 @@
 		</dependency>
 	</dependencies>
 	<repositories>
-		<repository>
-			<id>SpringSource Enterprise Bundle Repository – External Bundle Milestones</id>
-			<url>http://repository.springsource.com/maven/bundles/milestone</url>
-		</repository>
-		<repository>
-			<id>SpringSource Enterprise Bundle Repository – SpringSource Bundle Releases</id>
-			<url>http://repository.springsource.com/maven/bundles/release</url>
-		</repository>
-		<repository>
-			<id>SpringSource Enterprise Bundle Repository – External Bundle Releases</id>
-			<url>http://repository.springsource.com/maven/bundles/external</url>
-		</repository>
+		<!-- <repository> -->
+		<!-- <id>SpringSource Enterprise Bundle Repository – External Bundle Milestones</id> -->
+		<!-- <url>http://repository.springsource.com/maven/bundles/milestone</url> -->
+		<!-- </repository> -->
+		<!-- <repository> -->
+		<!-- <id>SpringSource Enterprise Bundle Repository – SpringSource Bundle 
+			Releases</id> -->
+		<!-- <url>http://repository.springsource.com/maven/bundles/release</url> -->
+		<!-- </repository> -->
+		<!-- <repository> -->
+		<!-- <id>SpringSource Enterprise Bundle Repository – External Bundle Releases</id> -->
+		<!-- <url>http://repository.springsource.com/maven/bundles/external</url> -->
+		<!-- </repository> -->
 	</repositories>
 </project>
