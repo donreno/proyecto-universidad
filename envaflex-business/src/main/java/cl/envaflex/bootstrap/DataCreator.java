@@ -30,6 +30,7 @@ public class DataCreator {
 	public void createData(){
 		Cargo admin = createCargoAdmin();
 		Cargo cargoVndr = createCargoVNDR();
+		createCargoSupervisor();
 		
 		//Creamos usuarios
 		Empleado gustavo = new Empleado();
@@ -55,7 +56,7 @@ public class DataCreator {
 		Cargo cargo = new Cargo();
 		cargo.setIdCargo("VNDR");
 		cargo.setNombreCargo("VENDEDOR");
-		cargo.setDescCargo("...");
+		cargo.setDescCargo("Ejecutivo de ventas");
 		cargoDao.insertar(cargo);
 		System.out.println("Cargo creado...");
 		return cargo;
@@ -65,7 +66,17 @@ public class DataCreator {
 		Cargo cargo = new Cargo();
 		cargo.setIdCargo("ADMN");
 		cargo.setNombreCargo("ADMINISTRADOR");
-		cargo.setDescCargo("...");
+		cargo.setDescCargo("Administrador de sistema");
+		cargoDao.insertar(cargo);
+		System.out.println("Cargo creado...");
+		return cargo;
+	}
+	
+	private Cargo createCargoSupervisor(){
+		Cargo cargo = new Cargo();
+		cargo.setIdCargo("SUPR");
+		cargo.setNombreCargo("SUPERVISOR");
+		cargo.setDescCargo("Supervisor de Ventas");
 		cargoDao.insertar(cargo);
 		System.out.println("Cargo creado...");
 		return cargo;
