@@ -11,6 +11,7 @@ public class CargoObject implements Serializable {
 	
 	private String nombre;
 	private String desc;
+	private String algo;
 	
 	public String getNombre() {
 		return nombre;
@@ -23,6 +24,12 @@ public class CargoObject implements Serializable {
 	}
 	public void setDesc(String desc) {
 		this.desc = desc;
+	}
+	public String getAlgo() {
+		return algo;
+	}
+	public void setAlgo(String algo) {
+		this.algo = algo;
 	}
 
 }

@@ -5,7 +5,9 @@
 	<display-name>envaflex-rest-business</display-name>
 	<context-param>
 		<param-name>contextConfigLocation</param-name>
-		<param-value>WEB-INF/web-config.xml</param-value>
+		<param-value>
+		WEB-INF/web-config.xml
+		</param-value>	
 	</context-param>
 	<listener>
 		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
@@ -18,7 +20,16 @@
 
 	<servlet-mapping>
 		<servlet-name>CXFServlet</servlet-name>
-		<url-pattern>/*</url-pattern>
+		<url-pattern>/service/*</url-pattern>
 	</servlet-mapping>
 
+	<!-- Agregamos los filtros -->
+	<filter>
+		<filter-name>springSecurityFilterChain</filter-name>
+		<filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>springSecurityFilterChain</filter-name>
+		<url-pattern>/service/*</url-pattern>
+	</filter-mapping>
 </web-app>
